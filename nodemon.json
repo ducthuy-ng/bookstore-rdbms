@@ -1,0 +1,4 @@
+{
+  "ignore": ["**/views/**"],
+  "watch": ["./src/*", ".env"]
+}

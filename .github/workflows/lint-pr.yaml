@@ -1,5 +1,4 @@
 name: lint-pr
-run-name: $${{ github.action }} is running Linting PR.
 
 on: [pull_request]
 

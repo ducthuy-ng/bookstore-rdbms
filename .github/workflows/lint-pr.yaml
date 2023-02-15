@@ -1,0 +1,25 @@
+name: lint-pr
+run-name: $${{ github.action }} is running Linting PR.
+
+on: [pull_request]
+
+jobs:
+  run-linter-and-formatter:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js 16.18
+        uses: actions/setup-node
+        with:
+          version: 16.18
+
+      - name: Install all dependencies
+        run: npm ci
+
+      - name: Lint check (all file)
+        run: npm run lint:check
+
+      - name: Format check (all file)
+        run: npm run format:check

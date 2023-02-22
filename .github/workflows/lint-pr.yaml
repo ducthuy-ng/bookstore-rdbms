@@ -1,6 +1,6 @@
 name: lint-pr
 
-on: [pull_request, push]
+on: [push]
 
 jobs:
   run-linter-and-formatter:

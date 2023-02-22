@@ -1,5 +1,5 @@
 import { IDatabase } from '../core/IDatabase';
-import { HBaseDB } from './hbase';
+import { HBaseDB } from './HBase';
 
 class DbEnvironmentVarMissing implements Error {
   name = 'DB Environment Variable Missing';

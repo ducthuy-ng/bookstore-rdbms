@@ -1,6 +1,6 @@
 name: lint-pr
 
-on: [pull_request]
+on: [push]
 
 jobs:
   run-linter-and-formatter:
@@ -12,7 +12,7 @@ jobs:
       - name: Setup Node.js 16.18
         uses: actions/setup-node@v3
         with:
-          version: 16.18
+          node-version: 16.18
 
       - name: Install all dependencies
         run: npm ci

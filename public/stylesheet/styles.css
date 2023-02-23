@@ -1,0 +1,82 @@
+body {
+  background-color: #05192d;
+  font-family: 'Times New Roman', Times, serif;
+  font-size: 18px;
+}
+
+.form {
+  width: 60%;
+  height: 95vh;
+  background-color: white;
+  margin: 100px auto;
+  border-radius: 5%;
+  padding: 0 20px;
+  display: block;
+  max-width: 550px;
+  min-width: 200px;
+}
+
+h1 {
+  color: black;
+  text-align: center;
+  padding-top: 30px;
+  font-size: 35px;
+  font-family: 'Times New Roman', Times, serif;
+}
+
+input,
+label,
+select,
+textarea {
+  display: block;
+}
+
+label {
+  padding: 20px;
+  font-weight: bold;
+  font-size: 20px;
+}
+
+input[type='text'],
+textarea,
+select {
+  border: 2px solid black;
+  border-left: none;
+  border-right: none;
+  border-top: none;
+  background-color: white;
+  transition-duration: 50ms;
+}
+
+input,
+textarea {
+  width: 100%;
+  margin: 0 auto;
+  padding: 10px 0;
+}
+
+select {
+  padding: 10px 0;
+  width: 100%;
+}
+
+img[alt='Book Icon'] {
+  width: 35px;
+  display: block;
+  margin: 0 auto;
+}
+
+input[type='button'] {
+  background-color: white;
+  border: 2px solid black;
+  font-size: 20px;
+  font-family: 'Times New Roman', Times, serif;
+  font-weight: bold;
+  position: relative;
+  top: -15px;
+}
+
+input[type='button']:hover {
+  background-color: Black;
+  color: white;
+}

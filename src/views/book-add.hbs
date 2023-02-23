@@ -5,10 +5,55 @@
       name='viewport'
       content='width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0'
     />
+    <link href='public/stylesheet/styles.css' rel='stylesheet' />
     <meta http-equiv='X-UA-Compatible' content='ie=edge' />
     <title>Add new book</title>
   </head>
-  <body>
 
+  <body>
+    <div class='form'>
+      <h1>Add New Book</h1>
+      <img src='public/images/BookIcon.png' alt='Book Icon' />
+      <form>
+        <label for='ISBN'>ISBN
+          <input
+            id='ISBN'
+            name='ISBN'
+            type='text'
+            placeholder="Enter book's ISBN"
+            required
+          /></label>
+        <label for='title'>Title
+          <input
+            id='title'
+            name='title'
+            type='text'
+            placeholder="Enter book's name"
+            required
+          /></label>
+        <label for='author'>Author
+          <input
+            id='author'
+            name='author'
+            type='text'
+            placeholder="Enter book's author"
+            required
+          /></label>
+        <label for='genre'>Genre
+          <input id='genre' name='genre' type='text' placeholder="Enter book's genre" /></label>
+        <label for='description'>Description
+          <textarea
+            id='description'
+            name='description'
+            placeholder="Enter book's description"
+            rows='3'
+          >
+            Description
+          </textarea>
+        </label>
+        <label for='title'>Upload your book <input id='file' name='file' type='file' /></label>
+        <label for='add'><input id='add' name='add' type='button' value='+ Add book' /></label>
+      </form>
+    </div>
   </body>
 </html>

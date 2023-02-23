@@ -15,11 +15,21 @@ dbBuilder.setEnvironmentVariables(process.env);
 
 const database = dbBuilder.getDatabaseInstance();
 
+app.use('/public', express.static(path.join(__dirname, '../public')));
+
 app.set('view engine', 'hbs');
 app.set('views', path.join(__dirname, './views'));
 
 app.get('/', (req: Request, res: Response) => {
   res.render('index', { title: 'Hey', body: 'Xin chào' });
+});
+
+app.get('/add', (req, res) => {
+  res.render('book-add');
+});
+
+app.post('/add', (req, res) => {
+  res.send(`Add book`);
 });
 
 app.get('/:isbn', (req: Request<{ isbn: string }>, res) => {
@@ -44,14 +54,6 @@ app.get('/:isbn', (req: Request<{ isbn: string }>, res) => {
 
 app.delete('/:isbn', (req: Request<{ isbn: string }>, res) => {
   res.send(`Delete record ${req.params.isbn}`);
-});
-
-app.get('/add', (req, res) => {
-  res.render('book-add');
-});
-
-app.post('/add', (req, res) => {
-  res.send(`Add book`);
 });
 
 app.listen(port, () => {

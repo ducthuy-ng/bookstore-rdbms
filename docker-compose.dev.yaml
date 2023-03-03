@@ -1,0 +1,26 @@
+version: '3.8'
+services:
+  hbase:
+    platform: linux/amd64
+    image: dajobe/hbase
+    ports:
+      - '2181:2181'
+      - '16010:16010'
+      - '8080:8080'
+      - '8085:8085'
+    volumes:
+      - hbase-volume:/data
+
+  postgres:
+    image: postgres:15.2-alpine3.17
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres-volume:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_USER=backend
+      - POSTGRES_PASSWORD=password
+
+volumes:
+  hbase-volume:
+  postgres-volume:

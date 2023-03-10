@@ -1,15 +1,18 @@
 version: '3.8'
 services:
   hbase:
-    platform: linux/amd64
-    image: dajobe/hbase
+    build:
+      dockerfile: hbase.Dockerfile
     ports:
-      - '2181:2181'
-      - '16010:16010'
       - '8080:8080'
       - '8085:8085'
+      - '9090:9090'
+      - '9095:9095'
+    environment:
+      - HBASE_INIT_SCHEMA_FILE=/initdb/hbase-schema.txt
+      - HBASE_INITDB_FILE=/initdb/clean-books-sep.csv
     volumes:
-      - hbase-volume:/data
+      - ./data:/initdb:ro
 
   db:
     image: postgres:15.2-alpine3.17
@@ -22,5 +25,4 @@ services:
       - POSTGRES_PASSWORD=postgres
 
 volumes:
-  hbase-volume:
   postgres-volume:

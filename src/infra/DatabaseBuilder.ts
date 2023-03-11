@@ -18,6 +18,14 @@ class DbBuilderEnvVarsNotSet implements Error {
     'Database Builder Environment Variables has not been set. Use setEnvironmentVariables(process.env)';
 }
 
+class InvalidEnvVariable implements Error {
+  name = 'Database Builder Environment Variables Not Set';
+  message: string;
+  constructor(variableName: string) {
+    this.message = `Environment variable is in invalid format or missing: ${variableName}`;
+  }
+}
+
 export class DatabaseBuilder {
   private databaseType = 'hbase';
   private envVars: NodeJS.ProcessEnv | undefined = undefined;
@@ -37,17 +45,29 @@ export class DatabaseBuilder {
     this.envVars = environmentVariable;
   }
 
-  getDatabaseInstance(): IDatabase {
+  async getDatabaseInstance(): Promise<IDatabase> {
     if (!this.envVars) {
       throw DbBuilderEnvVarsNotSet;
     }
 
     let newDbInstance: IDatabase;
+    if (this.envVars.HBASE_HOSTNAME === undefined) {
+      throw new InvalidEnvVariable('BASE_HOMENAME');
+    }
+
+    if (this.envVars.HBASE_PORT === undefined) {
+      throw new InvalidEnvVariable('HBASE_PORT');
+    }
+
+    const portNumber = parseInt(this.envVars.HBASE_PORT);
+    if (isNaN(portNumber)) {
+      throw new InvalidEnvVariable('HBASE_PORT');
+    }
 
     if (this.databaseType === 'hbase') {
-      newDbInstance = new HBaseDB(this.envVars.HBASE_HOSTNAME, this.envVars.HBASE_PORT);
+      newDbInstance = await HBaseDB.createInstance(this.envVars.HBASE_HOSTNAME, portNumber);
     } else {
-      newDbInstance = new HBaseDB(this.envVars.HBASE_HOSTNAME, this.envVars.HBASE_PORT);
+      newDbInstance = await HBaseDB.createInstance(this.envVars.HBASE_HOSTNAME, portNumber);
     }
 
     return newDbInstance;

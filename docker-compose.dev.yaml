@@ -13,12 +13,17 @@ services:
   #     - HBASE_INITDB_FILE=/initdb/clean-books-sep.csv
   #   volumes:
   #     - ./data:/initdb:ro
-  
-  postgres:
-    build:
-      dockerfile: postgres.Dockerfile
+
+  db:
+    image: postgres:15.2-alpine3.17
     ports:
       - '5432:5432'
-      - '5050:5050'
     volumes:
-      - ./data:/initdb:ro
+      - postgres-volume:/var/lib/postgresql/data
+      - ./data:/docker-entrypoint-initdb.d:ro
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+
+volumes:
+  postgres-volume:

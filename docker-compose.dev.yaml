@@ -1,28 +1,39 @@
 version: '3.8'
 services:
-  hbase:
+  # hbase:
+  #   build:
+  #     dockerfile: hbase.Dockerfile
+  #   ports:
+  #     - '8080:8080'
+  #     - '8085:8085'
+  #     - '9090:9090'
+  #     - '9095:9095'
+  #   environment:
+  #     - HBASE_INIT_SCHEMA_FILE=/initdb/hbase-schema.txt
+  #     - HBASE_INITDB_FILE=/initdb/clean-books-sep.csv
+  #   volumes:
+  #     - ./data:/initdb:ro
+  
+  postgres:
     build:
-      dockerfile: hbase.Dockerfile
-    ports:
-      - '8080:8080'
-      - '8085:8085'
-      - '9090:9090'
-      - '9095:9095'
-    environment:
-      - HBASE_INIT_SCHEMA_FILE=/initdb/hbase-schema.txt
-      - HBASE_INITDB_FILE=/initdb/clean-books-sep.csv
-    volumes:
-      - ./data:/initdb:ro
-
-  db:
-    image: postgres:15.2-alpine3.17
+      dockerfile: postgres.Dockerfile
     ports:
       - '5432:5432'
+      - '5050:5050'
     volumes:
-      - postgres-volume:/var/lib/postgresql/data
-    environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
-
-volumes:
-  postgres-volume:
+      - ./data:/initdb:ro
+#   postgres:
+#       image: postgres:15.2
+#       environment:
+#         - POSTGRES_USER=postgres
+#         - POSTGRES_PASSWORD=postgres
+#       ports:
+#         - '5432:5432'
+#       healthcheck:
+#         test: ["CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}"]
+#       build:
+#         context: ./postgres
+#         dockerfile: db.dockerfile
+# volumes:
+#   postgres:
+#     driver: local

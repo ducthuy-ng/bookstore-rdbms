@@ -1,20 +1,18 @@
-import { rejects } from 'assert';
-import exp from 'constants';
 import { HBaseDB } from '.';
-import { BookTableNotExistsInHBase, FailedToConnectToHBase } from './exceptions';
+import { FailedToConnectToHBase } from './exceptions';
 
 describe('Test HBase create', () => {
   test('Create correct connection should success', async () => {
     await expect(HBaseDB.createInstance('localhost', 8080)).resolves.not.toThrow();
   });
 
-  test('Create incorrect hostname connection should throw FailedToConnectToHBase', async () => {
+  test('Create incorrect hostname connection should throw FailedToConnectToHBase', () => {
     HBaseDB.createInstance('localhost', 9091).catch((error) =>
       expect(error).toBeInstanceOf(FailedToConnectToHBase)
     );
   });
 
-  test('Connect to an existing REST API server, but not a HBase one', async () => {
+  test('Connect to an existing REST API server, but not a HBase one', () => {
     HBaseDB.createInstance('localhost', 8085).catch((error) =>
       expect(error).toBeInstanceOf(FailedToConnectToHBase)
     );

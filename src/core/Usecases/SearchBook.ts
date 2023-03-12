@@ -6,6 +6,7 @@ export type SearchBookQuery = {
 };
 
 export type SearchBookDto = {
+  isbn: string;
   name: string;
   publishedYear: number;
   coverUrl: string;

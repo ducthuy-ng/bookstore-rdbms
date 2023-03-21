@@ -4,12 +4,12 @@ const client = new Pool({
   host: '0.0.0.0',
   password: 'postgres',
   port: 5432,
+  db: 'postgres',
 });
 
 const printDatabasesSizes = async () => {
   const query = `
-      SELECT *
-      FROM bookstore
+      SELECT * FROM book LIMIT 10
   `;
   try {
     await client.connect(); // creates connection

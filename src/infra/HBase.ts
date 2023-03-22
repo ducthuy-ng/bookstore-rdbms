@@ -1,8 +1,5 @@
 import { Book } from '../core/Book';
-import { IDatabase } from '../core/IDatabase';
-import { AddBookResult } from '../core/Usecases/AddBook';
-import { DeleteBookResult } from '../core/Usecases/DeleteBook';
-import { SearchBookDto } from '../core/Usecases/SearchBook';
+import { BookCountInYear, IDatabase, OperationResult, SearchBookDto } from '../core/IDatabase';
 
 export class HBaseDB implements IDatabase {
   private hostname = 'localhost';
@@ -19,18 +16,24 @@ export class HBaseDB implements IDatabase {
 
     console.log(`[hbase]: Created HBase instance: http://${this.hostname}:${this.port}`);
   }
+  addNewBook(book: Book): Promise<OperationResult> {
+    throw new Error('Method not implemented.');
+  }
+  deleteBook(bookIsbn: string): Promise<OperationResult> {
+    throw new Error('Method not implemented.');
+  }
+  countBookPerYear(): Promise<BookCountInYear> {
+    throw new Error('Method not implemented.');
+  }
+  searchInPriceRange(upperPrice: number, lowerPrice: number): Promise<SearchBookDto[]> {
+    throw new Error('Method not implemented.');
+  }
 
   search(queryBookName: string, pageNumber: number): Promise<SearchBookDto[]> {
     throw new Error('Method not implemented.');
   }
 
   getBookByIsbn(bookIsbn: string): Promise<Book | null> {
-    throw new Error('Method not implemented.');
-  }
-  addNewBook(book: Book): Promise<AddBookResult> {
-    throw new Error('Method not implemented.');
-  }
-  deleteBook(bookIsbn: string): Promise<DeleteBookResult> {
     throw new Error('Method not implemented.');
   }
 }

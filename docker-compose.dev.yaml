@@ -1,18 +1,18 @@
 version: '3.8'
 services:
-  hbase:
-    build:
-      dockerfile: hbase.Dockerfile
-    ports:
-      - '8080:8080'
-      - '8085:8085'
-      - '9090:9090'
-      - '9095:9095'
-    environment:
-      - HBASE_INIT_SCHEMA_FILE=/initdb/hbase-schema.txt
-      - HBASE_INITDB_FILE=/initdb/clean-books-sep.csv
-    volumes:
-      - ./data:/initdb:ro
+  # hbase:
+  #   build:
+  #     dockerfile: hbase.Dockerfile
+  #   ports:
+  #     - '8080:8080'
+  #     - '8085:8085'
+  #     - '9090:9090'
+  #     - '9095:9095'
+  #   environment:
+  #     - HBASE_INIT_SCHEMA_FILE=/initdb/hbase-schema.txt
+  #     - HBASE_INITDB_FILE=/initdb/clean-books-sep.csv
+  #   volumes:
+  #     - ./data:/initdb:ro
 
   db:
     image: postgres:15.2-alpine3.17

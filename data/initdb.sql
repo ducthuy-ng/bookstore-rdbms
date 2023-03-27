@@ -1,8 +1,8 @@
 CREATE TABLE book (
-    isbn BIGINT PRIMARY KEY,
-    name CHAR(255),
+    isbn CHAR(255) PRIMARY KEY,
+    name CHAR(255) NOT NULL,
     numofpage INT,
-    authors CHAR(255),
+    authors CHAR(255) NOT NULL,
     published_year INT,
     coverUrl CHAR(255),
     sellPrice INT

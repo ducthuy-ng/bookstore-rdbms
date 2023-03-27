@@ -1,5 +1,6 @@
 import { IDatabase } from '../core/IDatabase';
 import { HBaseDB } from './HBase';
+import { PostgresSQL } from './Postgres';
 
 class DbEnvironmentVarMissing implements Error {
   name = 'DB Environment Variable Missing';
@@ -43,11 +44,10 @@ export class DatabaseBuilder {
     }
 
     let newDbInstance: IDatabase;
-
     if (this.databaseType === 'hbase') {
       newDbInstance = new HBaseDB(this.envVars.HBASE_HOSTNAME, this.envVars.HBASE_PORT);
     } else {
-      newDbInstance = new HBaseDB(this.envVars.HBASE_HOSTNAME, this.envVars.HBASE_PORT);
+      newDbInstance = new PostgresSQL();
     }
 
     return newDbInstance;

@@ -10,7 +10,7 @@ services:
       - '9095:9095'
     environment:
       - HBASE_INIT_SCHEMA_FILE=/initdb/hbase-schema.txt
-      - HBASE_INITDB_FILE=/initdb/clean-books-sep.csv
+      - HBASE_INITDB_FILE=/initdb/books_hbase.csv
     volumes:
       - ./data:/initdb:ro
 

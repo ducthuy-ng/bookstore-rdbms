@@ -1,2 +1,2 @@
-create 'book', 'details'
+create 'book', 'info'
 exit

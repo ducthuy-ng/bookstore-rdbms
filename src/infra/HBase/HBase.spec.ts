@@ -1,36 +1,11 @@
 import { HBaseDB } from '.';
-import { FailedToConnectToHBase } from './exceptions';
-
-describe('Test HBase create', () => {
-  test('Create correct connection should success', async () => {
-    await expect(HBaseDB.createInstance('localhost', 8080)).resolves.not.toThrow();
-  });
-
-  test('Create incorrect hostname connection should throw FailedToConnectToHBase', () => {
-    HBaseDB.createInstance('localhost', 9091).catch((error) =>
-      expect(error).toBeInstanceOf(FailedToConnectToHBase)
-    );
-  });
-
-  test('Connect to an existing REST API server, but not a HBase one', () => {
-    HBaseDB.createInstance('localhost', 8085).catch((error) =>
-      expect(error).toBeInstanceOf(FailedToConnectToHBase)
-    );
-  });
-
-  // TODO
-  // test("Connect to an existing REST API server, but missing table 'Book'", () => {
-  //   expect(async () => {
-  //     const testHBase = HBaseDB.createInstance('localhost', 8080);
-  //   }).toThrow(BookTableNotExistsInHBase);
-  // });
-});
+import { Book } from '../../core/Book';
 
 describe('Test GetBookByIsbn', () => {
   let hbase: HBaseDB;
 
-  beforeAll(async () => {
-    hbase = await HBaseDB.createInstance('localhost', 8080);
+  beforeAll(() => {
+    hbase = new HBaseDB('localhost', 8080);
   });
 
   test('Get existing book should success', async () => {
@@ -55,5 +30,68 @@ describe('Test GetBookByIsbn', () => {
     const book = await hbase.getBookByIsbn(isbn);
 
     expect(book).toBeNull();
+  });
+});
+
+describe('Test fuzzy search book name', () => {
+  let hbase: HBaseDB;
+
+  beforeAll(() => {
+    hbase = new HBaseDB('localhost', 8080);
+  });
+
+  test('Test simple fetch', async () => {
+    const books = await hbase.search('the', 1);
+    expect(books).toHaveLength(10);
+    console.log(books);
+
+    books.forEach((book) => {
+      expect(book.name).toMatch(/The/i);
+    });
+  });
+
+  test('Test fetch page 2 should different than page 1', async () => {
+    const booksInPage1 = await hbase.search('the', 1);
+    const booksInPage2 = await hbase.search('the', 2);
+
+    booksInPage1.forEach((book1) => {
+      expect(booksInPage2).not.toContainEqual(book1);
+    });
+  });
+});
+
+describe('Book insertion and deletion', () => {
+  let hbase: HBaseDB;
+
+  beforeAll(() => {
+    hbase = new HBaseDB('localhost', 8080);
+  });
+
+  test('insert then delete', async () => {
+    const randomIsbn = '1234567890';
+    const book: Book = {
+      isbn: randomIsbn,
+      name: 'abc',
+      numOfPage: 10,
+      author: 'Tom',
+      publishedYear: 2023,
+      coverUrl: 'google.com',
+      sellPrice: 0,
+    };
+
+    const insertResult = await hbase.addNewBook(book);
+    expect(insertResult.success).toBeTruthy();
+
+    const result = await hbase.search('abc', 1);
+    console.log(result);
+
+    const searchBook = await hbase.getBookByIsbn(randomIsbn);
+    expect(searchBook).toStrictEqual(book);
+
+    const deleteResult = await hbase.deleteBook(randomIsbn);
+    expect(deleteResult).toBeTruthy();
+
+    const searchDeletedBook = await hbase.getBookByIsbn(randomIsbn);
+    expect(searchDeletedBook).toBeNull();
   });
 });

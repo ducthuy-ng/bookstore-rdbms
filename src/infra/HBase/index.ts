@@ -1,32 +1,56 @@
 import { Book } from '../../core/Book';
-import { IDatabase } from '../../core/IDatabase';
-import { AddBookResult } from '../../core/Usecases/AddBook';
-import { DeleteBookResult } from '../../core/Usecases/DeleteBook';
+import { BookCountInYear, IDatabase, OperationResult, SearchBookDto } from '../../core/IDatabase';
 
 import axios, { AxiosError } from 'axios';
-import { SearchBookDto } from '../../core/Usecases/SearchBook';
-import { BookDto, CellObject, TableListDto } from './dto';
-import { BookTableNotExistsInHBase, FailedToConnectToHBase } from './exceptions';
+import { FailedToCreateDb, InvalidEnvVariable } from '../DatabaseBuilder';
+import { CellObject, HBaseBookDto, HBaseRow, TableListDto } from './dto';
+import {
+  BookTableNotExistsInHBase,
+  FailedToConnectToHBase,
+  FailedToCreateNewScanner,
+  IsbnNotExist,
+} from './exceptions';
 
 export class HBaseDB implements IDatabase {
+  private static DELIMITER = '@@@';
+  private static NUM_OF_BOOK_PER_PAGE = 10;
+
   private hbaseUrl = '';
 
-  private constructor(hostname: string, port: number) {
+  private rowKeyOfPageEndCache: string[] = [];
+
+  constructor(hostname: string, port: number) {
     this.setUrl(hostname, port);
     console.log(`[hbase]: Created HBase instance: ${this.hbaseUrl}`);
-  }
-
-  static async createInstance(hostname: string, port: number): Promise<HBaseDB> {
-    const dbInstance = new HBaseDB(hostname, port);
-    await dbInstance.checkConnection();
-    return dbInstance;
   }
 
   private setUrl(hostname: string, port: number) {
     this.hbaseUrl = `http://${hostname}:${port}`;
   }
 
-  public async checkConnection() {
+  public static async createInstance(env: NodeJS.ProcessEnv): Promise<IDatabase> {
+    if (env.HBASE_HOSTNAME === undefined) {
+      throw new InvalidEnvVariable('HBASE_HOSTNAME');
+    }
+
+    if (env.HBASE_PORT === undefined) {
+      throw new InvalidEnvVariable('HBASE_PORT');
+    }
+
+    const portNumber = parseInt(env.HBASE_PORT);
+    if (isNaN(portNumber)) {
+      throw new InvalidEnvVariable('HBASE_PORT');
+    }
+
+    const newHbaseInstance = new HBaseDB(env.HBASE_HOSTNAME, portNumber);
+    const connectionResult = await newHbaseInstance.checkConnection();
+
+    if (!connectionResult.success) throw new FailedToCreateDb(connectionResult.message);
+
+    return newHbaseInstance;
+  }
+
+  private async checkConnection(): Promise<OperationResult> {
     try {
       const resp = await axios.get<TableListDto>(`${this.hbaseUrl}/`);
 
@@ -41,17 +65,156 @@ export class HBaseDB implements IDatabase {
       }
 
       console.log('[hbase]: Connect successfully to HBase instance');
-    } catch (error) {
-      if (error instanceof AxiosError) {
-        throw new FailedToConnectToHBase(this.hbaseUrl);
-      }
+      return { success: true, message: 'Connect successfully to HBase instance' };
+    } catch (err) {
+      if (err instanceof AxiosError || err instanceof TypeError)
+        return { success: false, message: `Failed to connect to HBase ${this.hbaseUrl}` };
 
-      if (error instanceof TypeError) {
-        throw new FailedToConnectToHBase(this.hbaseUrl);
-      }
-
-      throw error;
+      console.error(err);
+      return { success: false, message: `Unknown error ${String(err)}` };
     }
+  }
+
+  async addNewBook(book: Book): Promise<OperationResult> {
+    const rowKey = `${book.isbn}${HBaseDB.DELIMITER}${book.name}`;
+    const infoBasic = `${book.isbn}${HBaseDB.DELIMITER}${book.name}${HBaseDB.DELIMITER}${book.publishedYear}${HBaseDB.DELIMITER}${book.coverUrl}`;
+    const infoDetails = `${book.numOfPage}${HBaseDB.DELIMITER}${book.author}${HBaseDB.DELIMITER}${book.sellPrice}`;
+
+    const encodedRowKey = this.encodeBase64(rowKey);
+
+    const encodedBook: HBaseBookDto = {
+      Row: [
+        {
+          key: encodedRowKey,
+          Cell: [
+            {
+              column: 'aW5mbzpiYXNpYw==',
+              $: this.encodeBase64(infoBasic),
+            },
+            {
+              column: 'aW5mbzpkZXRhaWxz',
+              $: this.encodeBase64(infoDetails),
+            },
+          ],
+        },
+      ],
+    };
+
+    try {
+      await axios.put(`${this.hbaseUrl}/book/${encodedRowKey}`, encodedBook, {
+        headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+      });
+
+      console.log('added book with ISBN', book.isbn);
+
+      return { success: true, message: 'Add book successfully' };
+    } catch (err) {
+      console.error(err);
+
+      if (err instanceof Error) return { success: false, message: err.message };
+      return { success: false, message: 'Unknown error' };
+    }
+  }
+
+  async deleteBook(isbn: string): Promise<OperationResult> {
+    try {
+      const key = await this.getKeyOfIsbn(isbn);
+      await axios.delete(`${this.hbaseUrl}/book/${key}`);
+
+      console.log('deleted book with ISBN', isbn);
+
+      return { success: true, message: 'Deleted successfully' };
+    } catch (err) {
+      console.error(err);
+
+      if (err instanceof IsbnNotExist) return { success: false, message: 'Invalid ISBN' };
+      if (err instanceof AxiosError) return { success: false, message: err.message };
+      return { success: false, message: 'Internal error' };
+    }
+  }
+
+  async getBookByIsbn(isbn: string): Promise<Book | null> {
+    let key: string;
+    try {
+      key = await this.getKeyOfIsbn(isbn);
+    } catch (err) {
+      if (err instanceof IsbnNotExist) return null;
+      throw err;
+    }
+
+    const resp = await axios.get<HBaseBookDto>(`${this.hbaseUrl}/book/${key}`, {
+      headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+    });
+
+    if (resp.data['Row'].length !== 1) {
+      return null;
+    }
+
+    const parsedCellObjects = resp.data['Row'][0].Cell.map((cell) => this.decodeCellObject(cell));
+
+    let basicColValue = [
+      '0',
+      'Unknown',
+      'https://media.istockphoto.com/photos/blank-book-cover-isolated-on-white-picture-id478720334',
+      '0',
+    ].join(HBaseDB.DELIMITER);
+    let detailsColValue = ['0', 'Unknown', '0'].join(HBaseDB.DELIMITER);
+
+    parsedCellObjects.forEach((cellObject) => {
+      if (cellObject.column === 'info:basic') basicColValue = cellObject.$;
+      if (cellObject.column === 'info:details') detailsColValue = cellObject.$;
+    });
+
+    const [, name, publishedYear, coverUrl] = basicColValue.split(HBaseDB.DELIMITER);
+    const [numOfPage, author, sellPrice] = detailsColValue.split(HBaseDB.DELIMITER);
+
+    return {
+      isbn: isbn,
+      name: name,
+      publishedYear: this.parseIntWithSeparator(publishedYear),
+      coverUrl: coverUrl,
+      numOfPage: this.parseIntWithSeparator(numOfPage),
+      author: author,
+      sellPrice: this.parseIntWithSeparator(sellPrice),
+    };
+  }
+
+  async search(queryBookName: string, pageNumber: number): Promise<SearchBookDto[]> {
+    const scannerRequestXML = `
+    <Scanner 
+      batch="${pageNumber * HBaseDB.NUM_OF_BOOK_PER_PAGE}"
+      maxVersions="1">
+      <column>aW5mbzpiYXNpYw==</column>
+      <filter>
+        {
+          "op":"EQUAL",
+          "type":"RowFilter",
+          "family":"ZGV0YWlscw",
+          "qualifier":"aW5mbw==",
+          "comparator": {
+            "value": "${queryBookName}", 
+            "type": "SubstringComparator"
+          }
+        }
+      </filter>
+    </Scanner>`;
+
+    const searchBooks = await this.performScanRequest(scannerRequestXML);
+
+    if (searchBooks === null) return [];
+
+    const resultList = searchBooks['Row'].slice((pageNumber - 1) * HBaseDB.NUM_OF_BOOK_PER_PAGE);
+    return resultList.map((row) => this.parseBasic(row));
+  }
+
+  // TODO
+  countBookPerYear(): Promise<BookCountInYear> {
+    throw new Error('Method not implemented.');
+  }
+
+  // TODO
+  searchInPriceRange(upperPrice: number, lowerPrice: number): Promise<SearchBookDto[]> {
+    throw new Error('Method not implemented.');
   }
 
   private decodeCellObject(cell: CellObject): CellObject {
@@ -62,67 +225,87 @@ export class HBaseDB implements IDatabase {
     };
   }
 
-  private decodeCellList(cellList: CellObject[]): CellObject[] {
-    return cellList.map((cell) => this.decodeCellObject(cell));
-  }
-
-  private mapCellListToBook(cellList: CellObject[]) {
-    return new Map(cellList.map((cell) => [cell.column, cell.$]));
-  }
-
-  private parseFloatWithSeperator(rawString: string | undefined) {
+  private parseIntWithSeparator(rawString: string | undefined) {
     if (rawString === undefined) {
       rawString = '0';
     }
 
-    return parseFloat(rawString.replace(/,/g, ''));
+    return parseInt(rawString.replace(/,/g, ''));
   }
 
-  search(queryBookName: string, pageNumber: number): Promise<SearchBookDto[]> {
-    throw new Error('Method not implemented.');
-  }
-
-  async getBookByIsbn(bookIsbn: string): Promise<Book | null> {
+  private async performScanRequest(scannerRequestXML: string): Promise<HBaseBookDto | null> {
     try {
-      const resp = await axios.get<BookDto>(`${this.hbaseUrl}/book/${bookIsbn}`);
+      const resp = await axios.put<string>(`${this.hbaseUrl}/book/scanner`, scannerRequestXML, {
+        headers: { 'Content-Type': 'text/xml', Accept: 'text/xml' },
+      });
 
-      if (resp.data.Row.length === 0) return null;
+      const scannerUrl = String(resp.headers['location']);
 
-      for (const row of resp.data.Row) {
-        const isbn = Buffer.from(row.key, 'base64').toString();
-
-        if (isbn !== bookIsbn) continue;
-
-        const decodedCellList = this.decodeCellList(row.Cell);
-        const mappedCell = this.mapCellListToBook(decodedCellList);
-        return {
-          isbn: bookIsbn,
-          name: mappedCell.get('details:name') || '',
-          author: mappedCell.get('details:authors') || '',
-          numOfPage: parseInt(mappedCell.get('details:pageNum') || '0') || 0,
-          coverUrl: mappedCell.get('details:coverUrl') || '/public/images/missing_book_cover.jpeg',
-          publishedYear: parseInt(mappedCell.get('details:publishedYear') || '0') || 0,
-          sellPrice: this.parseFloatWithSeperator(mappedCell.get('details:sellPrice')),
-        };
+      if (resp.status !== 201 || scannerUrl === '') {
+        throw new FailedToCreateNewScanner();
       }
 
-      return null;
-    } catch (error) {
-      if (error instanceof AxiosError) {
-        if (error.response?.status === 404) return null;
+      const queryResp = await axios.get<HBaseBookDto>(scannerUrl, {
+        headers: { Accept: 'application/json' },
+      });
 
-        throw new FailedToConnectToHBase(this.hbaseUrl);
-      }
+      await axios.delete(scannerUrl);
 
-      throw error;
+      if (!queryResp.data) return null;
+
+      return queryResp.data;
+    } catch (err) {
+      console.error(err);
+      throw new FailedToCreateNewScanner();
     }
   }
 
-  addNewBook(book: Book): Promise<AddBookResult> {
-    throw new Error('Method not implemented.');
+  private parseBasic(hbaseDto: HBaseRow): SearchBookDto {
+    const result = hbaseDto.Cell[0];
+    const rawCombinedInfos = this.decodeBase64(result.$);
+    const [isbn, bookName, publishedYearInString, coverUrl] = rawCombinedInfos.split(
+      HBaseDB.DELIMITER
+    );
+
+    return {
+      isbn: isbn,
+      name: bookName,
+      publishedYear: parseInt(publishedYearInString),
+      coverUrl: coverUrl,
+    };
   }
 
-  deleteBook(bookIsbn: string): Promise<DeleteBookResult> {
-    throw new Error('Method not implemented.');
+  private decodeBase64(value: string): string {
+    return Buffer.from(value, 'base64').toString();
+  }
+
+  private encodeBase64(value: string): string {
+    return Buffer.from(value).toString('base64');
+  }
+
+  /**
+   * throws IsbnNotExist
+   */
+  async getKeyOfIsbn(isbn: string): Promise<string> {
+    // Shell script: scan 'book', {FILTER => "( PrefixFilter('1234567890') )"}
+    const encodedIsbn = this.encodeBase64(isbn);
+
+    const prefixFilterScannerString = `
+    <Scanner batch="1" maxVersions="1">
+      <column>aW5mbw==</column>
+      <filter>
+        {
+          "type":"PrefixFilter",
+          "value":"${encodedIsbn}"
+        }
+      </filter>
+    </Scanner>`;
+
+    const result = await this.performScanRequest(prefixFilterScannerString);
+
+    if (result === null || result['Row'].length !== 1) throw new IsbnNotExist(isbn);
+
+    const key = this.decodeBase64(result['Row'][0].key);
+    return key;
   }
 }

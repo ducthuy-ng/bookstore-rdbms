@@ -2,6 +2,16 @@ import { Book } from '../core/Book';
 import { Pool } from 'pg';
 import { BookCountInYear, IDatabase, OperationResult, SearchBookDto } from '../core/IDatabase';
 
+type PostgresDto = {
+  isbn: string;
+  name: string;
+  numofpage: number;
+  authors: string;
+  published_year: number;
+  coverUrl: string;
+  sellPrice: number;
+};
+
 export class PostgresSQL implements IDatabase {
   private hostname = 'localhost';
   private port = 5432;
@@ -58,7 +68,7 @@ export class PostgresSQL implements IDatabase {
   async searchInPriceRange(upperPrice: number, lowerPrice: number): Promise<SearchBookDto[]> {
     const query = `SELECT * FROM book WHERE sellPrice <= ${upperPrice} AND sellPrice >= ${lowerPrice}`;
     try {
-      const { rows } = await this.client.query(query);
+      const { rows } = await this.client.query<PostgresDto>(query);
 
       const ans: SearchBookDto[] = [];
       for (let i = 0; i < rows.length; i++) {
@@ -70,7 +80,7 @@ export class PostgresSQL implements IDatabase {
         });
       }
       return ans;
-    } catch (error: any) {
+    } catch (error) {
       return [];
     }
   }
@@ -78,7 +88,7 @@ export class PostgresSQL implements IDatabase {
   async search(queryBookName: string, pageNumber: number): Promise<SearchBookDto[]> {
     const query = `SELECT * FROM book WHERE name = '${queryBookName}' AND numofpage = ${pageNumber}`;
     try {
-      const { rows } = await this.client.query(query);
+      const { rows } = await this.client.query<PostgresDto>(query);
 
       const ans: SearchBookDto[] = [];
       for (let i = 0; i < rows.length; i++) {
@@ -98,7 +108,7 @@ export class PostgresSQL implements IDatabase {
   async getBookByIsbn(bookIsbn: string): Promise<Book | null> {
     const query = `SELECT * FROM book WHERE isbn = '${bookIsbn}'`;
     try {
-      const { rows } = await this.client.query(query);
+      const { rows } = await this.client.query<PostgresDto>(query);
 
       if (rows.length === 0) {
         return null;

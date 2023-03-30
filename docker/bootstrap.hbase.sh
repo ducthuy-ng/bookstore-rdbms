@@ -27,7 +27,7 @@ init_db() {
     hbase org.apache.hadoop.hbase.mapreduce.ImportTsv \
         -Dcreate.table=yes \
         -Dimporttsv.separator='|' \
-        -Dimporttsv.columns=HBASE_ROW_KEY,details:name,details:pageNum,details:authors,details:publishedYear,details:coverUrl,details:sellPrice \
+        -Dimporttsv.columns=HBASE_ROW_KEY,info:basic,info:details \
         book \
         file://"$HBASE_INITDB_FILE"
 

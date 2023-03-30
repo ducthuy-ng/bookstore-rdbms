@@ -1,55 +1,33 @@
-import { IDatabase } from '../core/IDatabase';
-import { HBaseDB } from './HBase';
-
-class DbEnvironmentVarMissing implements Error {
-  name = 'DB Environment Variable Missing';
+export class DbEnvironmentVarMissing implements Error {
+  name = 'DBEnvironmentVariableMissing';
   message =
     '`DB_TYPE` has not been set. Its value must be a string of `postgres` or `hbase` (case-insensitive)';
 }
 
-class InvalidDatabaseTypeString implements Error {
-  name = 'Invalid Database Type String';
+export class InvalidDatabaseTypeString implements Error {
+  name = 'InvalidDatabaseTypeString';
   message = 'Database Type must be a string of `postgres` or `hbase` (case-insensitive)';
 }
 
-class DbBuilderEnvVarsNotSet implements Error {
-  name = 'Database Builder Environment Variables Not Set';
+export class DbBuilderEnvVarsNotSet implements Error {
+  name = 'DatabaseBuilderEnvironmentVariablesNotSet';
   message =
     'Database Builder Environment Variables has not been set. Use setEnvironmentVariables(process.env)';
 }
 
-export class DatabaseBuilder {
-  private databaseType = 'hbase';
-  private envVars: NodeJS.ProcessEnv | undefined = undefined;
-
-  setEnvironmentVariables(environmentVariable: NodeJS.ProcessEnv) {
-    if (!environmentVariable.DB_TYPE) {
-      throw new DbEnvironmentVarMissing();
-    }
-
-    const lowercaseDbType = environmentVariable.DB_TYPE.toLowerCase();
-
-    if (lowercaseDbType !== 'postgres' && lowercaseDbType !== 'hbase') {
-      throw new InvalidDatabaseTypeString();
-    }
-
-    this.databaseType = environmentVariable.DB_TYPE.toLowerCase();
-    this.envVars = environmentVariable;
+export class InvalidEnvVariable implements Error {
+  name = 'DatabaseBuilderEnvironmentVariablesNotSet';
+  message: string;
+  constructor(variableName: string) {
+    this.message = `Environment variable is in invalid format or missing: ${variableName}`;
   }
+}
 
-  getDatabaseInstance(): IDatabase {
-    if (!this.envVars) {
-      throw DbBuilderEnvVarsNotSet;
-    }
+export class FailedToCreateDb implements Error {
+  name = 'FailedToCreateDb';
+  message: string;
 
-    let newDbInstance: IDatabase;
-
-    if (this.databaseType === 'hbase') {
-      newDbInstance = new HBaseDB(this.envVars.HBASE_HOSTNAME, this.envVars.HBASE_PORT);
-    } else {
-      newDbInstance = new HBaseDB(this.envVars.HBASE_HOSTNAME, this.envVars.HBASE_PORT);
-    }
-
-    return newDbInstance;
+  constructor(detail: string) {
+    this.message = `Failed to create DB instance: ${detail}`;
   }
 }

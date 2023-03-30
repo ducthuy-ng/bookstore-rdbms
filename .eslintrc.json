@@ -13,6 +13,12 @@
   "plugins": ["@typescript-eslint"],
   "parserOptions": {
     "project": ["./tsconfig.json"]
-    //    "tsconfigRootDir": "__dirname"
-  }
+  },
+  "overrides": [
+    {
+      "files": ["*.spec.ts"],
+      "env": { "jest": true },
+      "plugins": ["jest"]
+    }
+  ]
 }

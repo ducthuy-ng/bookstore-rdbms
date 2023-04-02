@@ -21,7 +21,7 @@ interface IDatabase {
   addNewBook(book: Book): Promise<OperationResult>;
   deleteBook(bookIsbn: string): Promise<OperationResult>;
 
-  countBookPerYear(): Promise<BookCountInYear>;
+  countBookPerYear(): Promise<BookCountInYear[]>;
   searchInPriceRange(upperPrice: number, lowerPrice: number): Promise<SearchBookDto[]>;
 }
 

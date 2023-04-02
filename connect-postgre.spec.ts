@@ -8,26 +8,41 @@ const client = new Pool({
   db: 'postgres',
 });
 
-const getBookByIsbn = async (bookIbsn: string): Promise<Book | null> => {
-  const query = `SELECT * FROM book WHERE isbn = '${bookIbsn}'`;
+type BookCountInYear = { year: number; bookNum: number };
+
+const getBookByIsbn = async (bookIsbn: string): Promise<Book | null> => {
+  const query = 'CREATE INDEX isbn_name ON book(isbn)';
+  const query2 = `SELECT * FROM book WHERE isbn = '${bookIsbn}'`;
   try {
-    await client.connect(); // creates connection
-    const { rows } = await client.query(query); // sends query
-    console.log(rows);
-    client.end();
+    await client.query(query);
+    const { rows } = await client.query(query2);
+
     if (rows.length === 0) {
       return null;
     }
-    return rows[0];
-  } catch (error: any) {
-    console.error(error.stack);
+    var ans: Book = {
+      isbn: rows[0].isbn,
+      name: rows[0].name,
+      numOfPage: rows[0].numofpage,
+      author: rows[0].authors,
+      publishedYear: rows[0].published_year,
+      coverUrl: rows[0].coverUrl,
+      sellPrice: rows[0].sellPrice,
+    };
+    return ans;
+  } catch (error) {
+    console.error(error);
     return null;
   }
 };
 
 const main = async () => {
+  const start = Date.now();
   const rows = await getBookByIsbn('9786270541001');
+  const timeTaken = Date.now() - start;
+  console.log('Total time taken : ' + timeTaken + ' milliseconds');
   if (!rows) console.log(1);
   else console.log(rows);
 };
+
 main();

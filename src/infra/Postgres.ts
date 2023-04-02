@@ -12,6 +12,11 @@ type PostgresDto = {
   sellPrice: number;
 };
 
+type YearDto = {
+  published_year: number;
+  count: number;
+};
+
 export class PostgresSQL implements IDatabase {
   private hostname = 'localhost';
   private port = 5432;
@@ -40,7 +45,6 @@ export class PostgresSQL implements IDatabase {
       return { success: true, message: 'OK' };
     } catch (error) {
       console.error(error);
-
       if (error instanceof Error) return { success: false, message: error.message };
       return { success: false, message: 'Internal Server Error' };
     }
@@ -55,14 +59,26 @@ export class PostgresSQL implements IDatabase {
       return { success: true, message: 'OK' };
     } catch (error) {
       console.error(error);
-
       if (error instanceof Error) return { success: false, message: error.message };
       return { success: false, message: 'Internal Server Error' };
     }
   }
 
-  countBookPerYear(): Promise<BookCountInYear> {
-    throw new Error('Method not implemented.');
+  async countBookPerYear(): Promise<BookCountInYear[]> {
+    const query = `SELECT published_year, COUNT(*) FROM book GROUP BY published_year ORDER BY published_year`;
+    try {
+      const { rows } = await this.client.query<YearDto>(query);
+      const ans: BookCountInYear[] = [];
+      for (let i = 0; i < rows.length; i++) {
+        ans.push({
+          year: rows[i].published_year,
+          bookNum: rows[i].count,
+        });
+      }
+      return ans;
+    } catch (error) {
+      return [];
+    }
   }
 
   async searchInPriceRange(upperPrice: number, lowerPrice: number): Promise<SearchBookDto[]> {
@@ -113,11 +129,18 @@ export class PostgresSQL implements IDatabase {
       if (rows.length === 0) {
         return null;
       }
-
-      return rows[0];
+      var ans: Book = {
+        isbn: rows[0].isbn,
+        name: rows[0].name,
+        numOfPage: rows[0].numofpage,
+        author: rows[0].authors,
+        publishedYear: rows[0].published_year,
+        coverUrl: rows[0].coverUrl,
+        sellPrice: rows[0].sellPrice,
+      };
+      return ans;
     } catch (error) {
       console.error(error);
-
       return null;
     }
   }

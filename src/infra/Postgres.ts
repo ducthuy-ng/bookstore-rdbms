@@ -129,7 +129,7 @@ export class PostgresSQL implements IDatabase {
       if (rows.length === 0) {
         return null;
       }
-      var ans: Book = {
+      const ans: Book = {
         isbn: rows[0].isbn,
         name: rows[0].name,
         numOfPage: rows[0].numofpage,

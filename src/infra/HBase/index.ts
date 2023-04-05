@@ -208,7 +208,7 @@ export class HBaseDB implements IDatabase {
   }
 
   // TODO
-  countBookPerYear(): Promise<BookCountInYear> {
+  countBookPerYear(): Promise<BookCountInYear[]> {
     throw new Error('Method not implemented.');
   }
 

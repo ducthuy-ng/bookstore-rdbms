@@ -4,6 +4,7 @@ import path from 'path';
 import { IDatabase } from './core/IDatabase';
 
 import { HBaseDB } from './infra/HBase';
+import { PostgresSQL } from './infra/Postgres';
 
 dotenv.config();
 
@@ -65,7 +66,7 @@ async function startServers() {
   if (process.env.DB_TYPE === 'hbase') {
     database = await HBaseDB.createInstance(process.env);
   } else if (process.env.DB_TYPE === 'postgres') {
-    database = await HBaseDB.createInstance(process.env);
+    database = await PostgresSQL.createInstance(process.env);
   }
 
   app.listen(port, () => {

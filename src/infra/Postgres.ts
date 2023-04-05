@@ -23,7 +23,7 @@ export class PostgresSQL implements IDatabase {
   private username = 'postgres';
   private password = 'postgres';
   private db = 'postgres';
-  private client = new Pool({
+  private client: Pool = new Pool({
     user: 'postgres',
     host: 'localhost',
     password: 'postgres',
@@ -33,6 +33,21 @@ export class PostgresSQL implements IDatabase {
 
   constructor() {
     console.log(`[PostgreSQL]: Created PostgreSQL instance: http://${this.hostname}:${this.port}`);
+  }
+
+  public static async createInstance(env: NodeJS.ProcessEnv): Promise<IDatabase> {
+    const pgInstance = new PostgresSQL();
+    pgInstance.client = new Pool({
+      user: 'postgres',
+      host: 'localhost',
+      password: 'postgres',
+      port: 5432,
+      database: 'postgres',
+    });
+
+    await pgInstance.client.connect();
+
+    return pgInstance;
   }
 
   async addNewBook(book: Book): Promise<OperationResult> {

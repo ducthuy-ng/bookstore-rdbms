@@ -20,33 +20,23 @@ type YearDto = {
 export class PostgresSQL implements IDatabase {
   private hostname = 'localhost';
   private port = 5432;
-  private username = 'postgres';
-  private password = '123456';
-  private db = 'postgres';
-  private client: Pool = new Pool({
-    user: 'postgres',
-    host: 'localhost',
-    password: '123456',
-    port: 5432,
-    database: 'postgres',
-  });
 
-  constructor() {
+  readonly client: Pool;
+
+  constructor(user: string, password: string, host: string, port: number, database: string) {
+    this.client = new Pool({
+      user: user,
+      password: password,
+      host: host,
+      port: port,
+      database: database,
+    });
     console.log(`[PostgreSQL]: Created PostgreSQL instance: http://${this.hostname}:${this.port}`);
   }
 
   public static async createInstance(env: NodeJS.ProcessEnv): Promise<IDatabase> {
-    const pgInstance = new PostgresSQL();
-    pgInstance.client = new Pool({
-      user: 'postgres',
-      host: 'localhost',
-      password: '123456',
-      port: 5432,
-      database: 'postgres',
-    });
-
+    const pgInstance = new PostgresSQL('postgres', 'postgres', 'localhost', 5432, 'postgres');
     await pgInstance.client.connect();
-
     return pgInstance;
   }
 

@@ -21,12 +21,12 @@ export class PostgresSQL implements IDatabase {
   private hostname = 'localhost';
   private port = 5432;
   private username = 'postgres';
-  private password = 'postgres';
+  private password = '123456';
   private db = 'postgres';
   private client: Pool = new Pool({
     user: 'postgres',
     host: 'localhost',
-    password: 'postgres',
+    password: '123456',
     port: 5432,
     database: 'postgres',
   });
@@ -40,7 +40,7 @@ export class PostgresSQL implements IDatabase {
     pgInstance.client = new Pool({
       user: 'postgres',
       host: 'localhost',
-      password: 'postgres',
+      password: '123456',
       port: 5432,
       database: 'postgres',
     });

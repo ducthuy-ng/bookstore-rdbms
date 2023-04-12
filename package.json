@@ -6,7 +6,7 @@
   "scripts": {
     "setup-dev": "npm i && cp .env.example .env",
     "start:dev-container": "docker compose -f docker-compose.dev.yaml up --build -d",
-    "stop:dev-container": "docker compose -f docker-compose.dev.yaml down --timeout=20",
+    "stop:dev-container": "docker compose -f docker-compose.dev.yaml down --timeout=20 --volumes",
     "dev": "npx nodemon ./src/index.ts",
     "test": "echo \"Error: no test specified\" && exit 1",
     "lint": "npx eslint --ext .ts --fix src",

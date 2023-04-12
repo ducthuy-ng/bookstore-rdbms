@@ -179,10 +179,10 @@ export class HBaseDB implements IDatabase {
     };
   }
 
-  async search(queryBookName: string, pageNumber: number): Promise<SearchBookDto[]> {
+  async search(queryBookName: string, limit: number, offset: number): Promise<SearchBookDto[]> {
     const scannerRequestXML = `
     <Scanner 
-      batch="${pageNumber * HBaseDB.NUM_OF_BOOK_PER_PAGE}"
+      batch="${offset + limit}"
       maxVersions="1">
       <column>aW5mbzpiYXNpYw==</column>
       <filter>
@@ -203,7 +203,7 @@ export class HBaseDB implements IDatabase {
 
     if (searchBooks === null) return [];
 
-    const resultList = searchBooks['Row'].slice((pageNumber - 1) * HBaseDB.NUM_OF_BOOK_PER_PAGE);
+    const resultList = searchBooks['Row'].slice(offset);
     return resultList.map((row) => this.parseBasic(row));
   }
 

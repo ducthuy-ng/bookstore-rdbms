@@ -18,11 +18,6 @@ type YearDto = {
 };
 
 export class PostgresSQL implements IDatabase {
-  private hostname = 'localhost';
-  private port = 5432;
-  private username = 'postgres';
-  private password = 'postgres';
-  private db = 'postgres';
   private client: Pool = new Pool({
     user: 'postgres',
     host: 'localhost',
@@ -116,10 +111,12 @@ export class PostgresSQL implements IDatabase {
     }
   }
 
-  async search(queryBookName: string, pageNumber: number): Promise<SearchBookDto[]> {
-    const query = `SELECT * FROM book WHERE name = '${queryBookName}' AND numofpage = ${pageNumber}`;
+  async search(queryBookName: string, limit: number, offset: number): Promise<SearchBookDto[]> {
+    queryBookName = `%${queryBookName}%`;
+    const query = 'SELECT * FROM book WHERE name ILIKE $1 OFFSET $2 LIMIT $3;';
     try {
-      const { rows } = await this.client.query<PostgresDto>(query);
+      const { rows } = await this.client.query<PostgresDto>(query, [queryBookName, offset, limit]);
+      console.log(rows);
 
       const ans: SearchBookDto[] = [];
       for (let i = 0; i < rows.length; i++) {

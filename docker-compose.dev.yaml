@@ -1,18 +1,30 @@
 version: '3.8'
+
 services:
-  # hbase:
-  #   build:
-  #     dockerfile: hbase.Dockerfile
+  hbase:
+    build:
+      dockerfile: hbase.Dockerfile
+    ports:
+      - '2181:2181'
+      - '8080:8080'
+      - '8085:8085'
+      - '9090:9090'
+      - '9095:9095'
+    environment:
+      - HBASE_INIT_SCHEMA_FILE=/initdb/hbase-schema.txt
+      - HBASE_INITDB_FILE=/initdb/books_hbase.csv
+    volumes:
+      - ./data:/initdb:ro
+
+  # hdfs:
+  #   image: enzo90910/multiarch-hadoop-singlenode:3.3.0
   #   ports:
-  #     - '8080:8080'
-  #     - '8085:8085'
-  #     - '9090:9090'
-  #     - '9095:9095'
-  #   environment:
-  #     - HBASE_INIT_SCHEMA_FILE=/initdb/hbase-schema.txt
-  #     - HBASE_INITDB_FILE=/initdb/books_hbase.csv
-  #   volumes:
-  #     - ./data:/initdb:ro
+  #     - '9870:9870'
+  #     - '8088:8088'
+  #     - '4040:4040'
+  #     - '18080:18080'
+  #   networks:
+  #     - hdfs-network
 
   db:
     image: postgres:15.2-alpine3.17

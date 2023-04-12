@@ -1,6 +1,7 @@
 import { Book } from '../core/Book';
 import { Pool } from 'pg';
 import { BookCountInYear, IDatabase, OperationResult, SearchBookDto } from '../core/IDatabase';
+import { InvalidEnvVariable } from './DatabaseBuilder';
 
 type PostgresDto = {
   isbn: string;
@@ -18,25 +19,55 @@ type YearDto = {
 };
 
 export class PostgresSQL implements IDatabase {
-  private hostname = 'localhost';
-  private port = 5432;
-
-  readonly client: Pool;
-
-  constructor(user: string, password: string, host: string, port: number, database: string) {
-    this.client = new Pool({
-      user: user,
-      password: password,
-      host: host,
-      port: port,
-      database: database,
-    });
-    console.log(`[PostgreSQL]: Created PostgreSQL instance: http://${this.hostname}:${this.port}`);
-  }
+  private client: Pool = new Pool({
+    user: 'postgres',
+    host: 'localhost',
+    password: 'postgres',
+    port: 5432,
+    database: 'postgres',
+  });
 
   public static async createInstance(env: NodeJS.ProcessEnv): Promise<IDatabase> {
-    const pgInstance = new PostgresSQL('postgres', 'postgres', 'localhost', 5432, 'postgres');
+    const pgInstance = new PostgresSQL();
+
+    if (env.PG_HOSTNAME === undefined) {
+      throw new InvalidEnvVariable('PG_HOSTNAME');
+    }
+
+    if (env.PG_PORT === undefined) {
+      throw new InvalidEnvVariable('PG_PORT');
+    }
+    const portNumber = parseInt(env.PG_PORT);
+    if (isNaN(portNumber)) {
+      throw new InvalidEnvVariable('PG_PORT');
+    }
+
+    if (env.PG_USER === undefined) {
+      throw new InvalidEnvVariable('PG_USER');
+    }
+
+    if (env.PG_PASSWORD === undefined) {
+      throw new InvalidEnvVariable('PG_PASSWORD');
+    }
+
+    if (env.PG_DATABASE === undefined) {
+      throw new InvalidEnvVariable('PG_DATABASE');
+    }
+
+    pgInstance.client = new Pool({
+      host: env.PG_HOSTNAME,
+      port: portNumber,
+      user: env.PG_USER,
+      password: env.PG_PASSWORD,
+      database: env.PG_DATABASE,
+    });
+
     await pgInstance.client.connect();
+
+    console.log(
+      `[PostgreSQL]: Created PostgreSQL instance: http://${env.PG_HOSTNAME}:${portNumber}`
+    );
+
     return pgInstance;
   }
 
@@ -106,10 +137,12 @@ export class PostgresSQL implements IDatabase {
     }
   }
 
-  async search(queryBookName: string, pageNumber: number): Promise<SearchBookDto[]> {
-    const query = `SELECT * FROM book WHERE name = '${queryBookName}' AND numofpage = ${pageNumber}`;
+  async search(queryBookName: string, limit: number, offset: number): Promise<SearchBookDto[]> {
+    queryBookName = `%${queryBookName}%`;
+    const query = 'SELECT * FROM book WHERE name ILIKE $1 OFFSET $2 LIMIT $3;';
     try {
-      const { rows } = await this.client.query<PostgresDto>(query);
+      const { rows } = await this.client.query<PostgresDto>(query, [queryBookName, offset, limit]);
+      console.log(rows);
 
       const ans: SearchBookDto[] = [];
       for (let i = 0; i < rows.length; i++) {

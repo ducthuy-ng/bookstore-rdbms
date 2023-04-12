@@ -15,7 +15,7 @@ type SearchBookDto = {
 type BookCountInYear = { year: number; bookNum: number };
 
 interface IDatabase {
-  search(queryBookName: string, pageNumber: number): Promise<SearchBookDto[]>;
+  search(queryBookName: string, limit: number, offset: number): Promise<SearchBookDto[]>;
   getBookByIsbn(bookIsbn: string): Promise<Book | null>;
 
   addNewBook(book: Book): Promise<OperationResult>;

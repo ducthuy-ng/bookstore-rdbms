@@ -8,6 +8,8 @@ import { PostgresSQL } from './infra/Postgres';
 
 dotenv.config();
 
+console.log(process.env);
+
 const app: Application = express();
 const port = process.env.PORT || 3000;
 
@@ -20,7 +22,7 @@ app.set('views', path.join(__dirname, './views'));
 
 app.get('/', (req: Request, res: Response) => {
   database
-    .search('', 1)
+    .search('', 10, 0)
     .then((searchResults) => {
       res.render('index', { data: searchResults });
     })
@@ -63,10 +65,15 @@ app.delete('/:isbn', (req: Request<{ isbn: string }>, res) => {
 });
 
 async function startServers() {
-  if (process.env.DB_TYPE === 'hbase') {
-    database = await HBaseDB.createInstance(process.env);
-  } else if (process.env.DB_TYPE === 'postgres') {
-    database = await PostgresSQL.createInstance(process.env);
+  switch (process.env.DB_TYPE) {
+    case 'hbase':
+      database = await HBaseDB.createInstance(process.env);
+      break;
+    case 'postgres':
+      database = await PostgresSQL.createInstance(process.env);
+      break;
+    default:
+      throw new Error('Invalid config. `DB_TYPE` must be `hbase` or `postgres`');
   }
 
   app.listen(port, () => {

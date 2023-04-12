@@ -1,11 +1,15 @@
 CREATE TABLE book (
     isbn CHAR(255) PRIMARY KEY,
-    name CHAR(255) NOT NULL,
+    name VARCHAR(255) NOT NULL,
     numofpage INT,
-    authors CHAR(255) NOT NULL,
+    authors VARCHAR NOT NULL,
     published_year INT,
-    coverUrl CHAR(255),
+    coverUrl VARCHAR,
     sellPrice INT
 );
 COPY book
 FROM '/docker-entrypoint-initdb.d/data.csv' WITH (FORMAT csv);
+
+-- CREATE EXTENSION pg_trgm;
+-- CREATE INDEX book_name_idx ON book USING GIN (name gin_trgm_ops);
+-- SET pg_trgm.similarity_threshold = 0.15;

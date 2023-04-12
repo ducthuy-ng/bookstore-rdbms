@@ -19,6 +19,7 @@ app.set('view engine', 'hbs');
 app.set('views', path.join(__dirname, './views'));
 
 app.get('/', (req: Request, res: Response) => {
+  
   database
     .search('', 1)
     .then((searchResults) => {

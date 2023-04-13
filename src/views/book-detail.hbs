@@ -6,9 +6,43 @@
       content='width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0'
     />
     <meta http-equiv='X-UA-Compatible' content='ie=edge' />
-    <title>Add new book</title>
+    <link rel='stylesheet' href='public/stylesheet/styles.css' />
+    <link href='public/stylesheet/book-detail.css' rel='stylesheet' />
+    <link rel='stylesheet' href='https://fonts.googleapis.com/icon?family=Material+Icons' />
+    <title>Book detail</title>
   </head>
-  <body>
 
+  <body>
+    <header>
+      <div>BookStore</div>
+      <img id='logo' src='public/images/BookIcon.png' alt='Book Icon' />
+      <div>&nbsp;</div>
+    </header>
+    <article>
+
+      <div class='row-link'>
+        <a id='return-link'>
+          <i class='material-icons md-18'>arrow_back</i>
+          <div>
+            Quay lại trang chủ
+          </div>
+        </a>
+      </div>
+
+      {{#if book}}
+      {{> book_info book=book}}
+      {{else}}
+      {{> book_not_found}}
+      {{/if}}
+
+    </article>
   </body>
+
+  <script defer='true'>
+    try {
+      const referrer = new URL(document.referrer);
+      if (referrer.origin === location.origin && referrer.pathname === '/')
+        document.getElementById('return-link').href = referrer.href
+    } catch { }
+  </script>
 </html>

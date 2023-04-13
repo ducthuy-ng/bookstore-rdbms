@@ -37,5 +37,10 @@ services:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
 
+  adminer:
+    image: adminer:4.8.1-standalone
+    ports:
+      - '8081:8080'
+
 volumes:
   postgres-volume:

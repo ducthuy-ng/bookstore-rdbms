@@ -6,11 +6,11 @@ import { InvalidEnvVariable } from './DatabaseBuilder';
 type PostgresDto = {
   isbn: string;
   name: string;
-  numofpage: number;
+  num_of_page: number;
   authors: string;
   published_year: number;
-  coverUrl: string;
-  sellPrice: number;
+  cover_url: string;
+  sell_price: number;
 };
 
 type YearDto = {
@@ -128,7 +128,7 @@ export class PostgresSQL implements IDatabase {
           isbn: rows[i].isbn,
           name: rows[i].name,
           publishedYear: rows[i].published_year,
-          coverUrl: rows[i].coverUrl,
+          coverUrl: rows[i].cover_url,
         });
       }
       return ans;
@@ -142,7 +142,6 @@ export class PostgresSQL implements IDatabase {
     const query = 'SELECT * FROM book WHERE name ILIKE $1 OFFSET $2 LIMIT $3;';
     try {
       const { rows } = await this.client.query<PostgresDto>(query, [queryBookName, offset, limit]);
-      console.log(rows);
 
       const ans: SearchBookDto[] = [];
       for (let i = 0; i < rows.length; i++) {
@@ -150,7 +149,7 @@ export class PostgresSQL implements IDatabase {
           isbn: rows[i].isbn,
           name: rows[i].name,
           publishedYear: rows[i].published_year,
-          coverUrl: rows[i].coverUrl,
+          coverUrl: rows[i].cover_url,
         });
       }
       return ans;
@@ -170,11 +169,11 @@ export class PostgresSQL implements IDatabase {
       const ans: Book = {
         isbn: rows[0].isbn,
         name: rows[0].name,
-        numOfPage: rows[0].numofpage,
+        numOfPage: rows[0].num_of_page,
         author: rows[0].authors,
         publishedYear: rows[0].published_year,
-        coverUrl: rows[0].coverUrl,
-        sellPrice: rows[0].sellPrice,
+        coverUrl: rows[0].cover_url,
+        sellPrice: rows[0].sell_price,
       };
       return ans;
     } catch (error) {

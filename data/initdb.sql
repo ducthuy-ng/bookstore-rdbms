@@ -1,11 +1,11 @@
 CREATE TABLE book (
-    isbn CHAR(255) PRIMARY KEY,
+    isbn VARCHAR(255) PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
-    numofpage INT,
+    num_of_page INT,
     authors VARCHAR NOT NULL,
     published_year INT,
-    coverUrl VARCHAR,
-    sellPrice INT
+    cover_url VARCHAR,
+    sell_price INT
 );
 COPY book
 FROM '/docker-entrypoint-initdb.d/data.csv' WITH (FORMAT csv);

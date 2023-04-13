@@ -8,8 +8,6 @@ import { PostgresSQL } from './infra/Postgres';
 
 dotenv.config();
 
-console.log(process.env);
-
 const app: Application = express();
 const port = process.env.PORT || 3000;
 
@@ -21,7 +19,6 @@ app.set('view engine', 'hbs');
 app.set('views', path.join(__dirname, './views'));
 
 app.get('/', (req: Request, res: Response) => {
-  
   database
     .search('', 10, 0)
     .then((searchResults) => {

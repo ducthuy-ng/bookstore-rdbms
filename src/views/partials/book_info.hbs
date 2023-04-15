@@ -1,0 +1,41 @@
+<div class='content'>
+  <div>
+    <h1 class='book-detail-title'>Thông tin sách</h1>
+
+    <div class='content-row'>
+      <div class='form-name'>ISBN</div>
+      <div>{{book.isbn}}</div>
+    </div>
+
+    <div class='content-row'>
+      <div class='form-name'>Name</div>
+      <div>{{book.name}}</div>
+    </div>
+
+    <div class='content-row'>
+      <div class='form-name'>Number of pages</div>
+      <div>{{book.numOfPage}}</div>
+    </div>
+
+    <div class='content-row'>
+      <div class='form-name'>Authors</div>
+      <div>{{book.author}}</div>
+    </div>
+
+    <div class='content-row'>
+      <div class='form-name'>Publishing Year</div>
+      <div>{{book.publishedYear}}</div>
+    </div>
+
+    <div class='content-row'>
+      <div class='form-name'>Selling Price</div>
+      <div>{{book.sellPrice}}</div>
+    </div>
+
+  </div>
+
+  <div class='img-column'>
+    <div>&nbsp;</div>
+    <img src='{{book.coverUrl}}' class='book-cover' />
+  </div>
+</div>

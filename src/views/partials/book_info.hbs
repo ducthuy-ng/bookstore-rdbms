@@ -1,34 +1,34 @@
-<div class='content'>
+<div class='content px-5 grid gap-x-36' style="grid-template-columns: auto 200px">
   <div>
-    <h1 class='book-detail-title'>Thông tin sách</h1>
+    <h1 class='text-2xl text-center'>Thông tin sách</h1>
 
-    <div class='content-row'>
-      <div class='form-name'>ISBN</div>
+    <div class='flex justify-between mx-5 my-2'>
+      <div class='font-bold'>ISBN</div>
       <div>{{book.isbn}}</div>
     </div>
 
-    <div class='content-row'>
-      <div class='form-name'>Name</div>
+    <div class='flex justify-between mx-5 my-2'>
+      <div class='font-bold'>Name</div>
       <div>{{book.name}}</div>
     </div>
 
-    <div class='content-row'>
-      <div class='form-name'>Number of pages</div>
+    <div class='flex justify-between mx-5 my-2'>
+      <div class='font-bold'>Number of pages</div>
       <div>{{book.numOfPage}}</div>
     </div>
 
-    <div class='content-row'>
-      <div class='form-name'>Authors</div>
+    <div class='flex justify-between mx-5 my-2'>
+      <div class='font-bold'>Authors</div>
       <div>{{book.author}}</div>
     </div>
 
-    <div class='content-row'>
-      <div class='form-name'>Publishing Year</div>
+    <div class='flex justify-between mx-5 my-2'>
+      <div class='font-bold'>Publishing Year</div>
       <div>{{book.publishedYear}}</div>
     </div>
 
-    <div class='content-row'>
-      <div class='form-name'>Selling Price</div>
+    <div class='flex justify-between mx-5 my-2'>
+      <div class='font-bold'>Selling Price</div>
       <div>{{book.sellPrice}}</div>
     </div>
 
@@ -36,6 +36,6 @@
 
   <div class='img-column'>
     <div>&nbsp;</div>
-    <img src='{{book.coverUrl}}' class='book-cover' />
+    <img src='{{book.coverUrl}}' class='book-cover w-full' />
   </div>
 </div>

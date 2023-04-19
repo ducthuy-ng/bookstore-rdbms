@@ -50,16 +50,6 @@ app.get('/:isbn', (req: Request<{ isbn: string }>, res) => {
     .catch(() => {
       res.sendStatus(500);
     });
-
-  // const book: Book = {
-  //   isbn: '123',
-  //   name: 'ABC',
-  //   numOfPage: 0,
-  //   author: '',
-  //   publishedYear: 0,
-  //   coverUrl: 'public/images/missing_book_cover.jpeg',
-  //   sellPrice: 0,
-  // };
 });
 
 app.delete('/:isbn', (req: Request<{ isbn: string }>, res) => {

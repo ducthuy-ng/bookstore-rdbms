@@ -1,48 +1,35 @@
 <html>
-  <head>
-    <meta charset='UTF-8' />
-    <meta
-      name='viewport'
-      content='width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0'
-    />
-    <meta http-equiv='X-UA-Compatible' content='ie=edge' />
-    <link rel='stylesheet' href='public/stylesheet/styles.css' />
-    <link href='public/stylesheet/book-detail.css' rel='stylesheet' />
-    <link rel='stylesheet' href='https://fonts.googleapis.com/icon?family=Material+Icons' />
-    <title>Book detail</title>
-  </head>
 
-  <body>
-    <header>
-      <div>BookStore</div>
-      <img id='logo' src='public/images/BookIcon.png' alt='Book Icon' />
-      <div>&nbsp;</div>
-    </header>
-    <article>
+{{> head title="Book detail"}}
 
-      <div class='row-link'>
-        <a id='return-link'>
-          <i class='material-icons md-18'>arrow_back</i>
-          <div>
-            Quay lại trang chủ
-          </div>
-        </a>
-      </div>
+<body>
+  {{> header }}
 
-      {{#if book}}
+  <article class="p-2">
+    <div class='pb-2'>
+      <a id='return-link' class="object-content flex gap-px no-underline">
+        <i class='material-icons text-xl'>arrow_back</i>
+        <div>
+          Quay lại trang chủ
+        </div>
+      </a>
+    </div>
+
+    {{#if book}}
       {{> book_info book=book}}
-      {{else}}
+    {{else}}
       {{> book_not_found}}
-      {{/if}}
+    {{/if}}
 
-    </article>
-  </body>
+  </article>
+</body>
 
-  <script defer='true'>
-    try {
-      const referrer = new URL(document.referrer);
-      if (referrer.origin === location.origin && referrer.pathname === '/')
-        document.getElementById('return-link').href = referrer.href
-    } catch { }
-  </script>
+<script defer='true'>
+  try {
+    const referrer = new URL(document.referrer);
+    if (referrer.origin === location.origin && referrer.pathname === '/')
+      document.getElementById('return-link').href = referrer.href
+  } catch { }
+</script>
+
 </html>

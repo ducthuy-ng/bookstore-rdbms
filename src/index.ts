@@ -22,8 +22,10 @@ app.set('views', path.join(__dirname, '/views'));
 hbs.registerPartials(path.join(__dirname + '/views/partials'));
 
 app.get('/', (req: Request, res: Response) => {
+  const queryBookName = req.query['book-name'] || '';
+
   database
-    .search('', 10, 0)
+    .search(String(queryBookName), 10, 0)
     .then((searchResults) => {
       res.render('index', { data: searchResults });
     })

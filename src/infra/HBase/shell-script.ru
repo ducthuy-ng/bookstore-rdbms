@@ -1,0 +1,1 @@
+scan 'book', {FILTER => "SingleColumnValueFilter('info', 'price', <, 'binary:0001000000')"}

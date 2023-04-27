@@ -15,7 +15,6 @@ def main():
     data["combined-key"] = (
         data["ISBN"].astype("string").str.cat(data["name"], sep=FIELD_SEPARATOR)
     )
-    print(data["combined-key"])
 
     data["basic"] = data["ISBN-string"].str.cat(
         data[["name", "published_year-string", "coverUrl"]],
@@ -26,7 +25,9 @@ def main():
         data[["authors", "sellPrice"]], sep=FIELD_SEPARATOR
     )
 
-    data[["combined-key", "basic", "details"]].to_csv(
+    data['parsedSellPrice'] = data['sellPrice'].str.replace(',', '').str.pad(width=10, fillchar='0')
+
+    data[["combined-key", "basic", "details", "parsedSellPrice"]].to_csv(
         "./books_hbase.csv", header=False, index=False, sep="|"
     )
 

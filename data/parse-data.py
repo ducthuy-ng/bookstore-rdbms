@@ -13,7 +13,8 @@ def main():
     data["published_year-string"] = data["published_year"].astype("string")
 
     data["combined-key"] = (
-        data["ISBN"].astype("string").str.cat(data["name"], sep=FIELD_SEPARATOR)
+        data["ISBN"].astype("string").str.cat(
+            data["name"], sep=FIELD_SEPARATOR)
     )
 
     data["basic"] = data["ISBN-string"].str.cat(
@@ -25,9 +26,10 @@ def main():
         data[["authors", "sellPrice"]], sep=FIELD_SEPARATOR
     )
 
-    data['parsedSellPrice'] = data['sellPrice'].str.replace(',', '').str.pad(width=10, fillchar='0')
+    data['parsedSellPrice'] = data['sellPrice'].str.replace(',', '') \
+        .str.pad(width=10, fillchar='0')
 
-    data[["combined-key", "basic", "details", "parsedSellPrice"]].to_csv(
+    data[["combined-key", "basic", "details", "parsedSellPrice", "published_year-string"]].to_csv(
         "./books_hbase.csv", header=False, index=False, sep="|"
     )
 

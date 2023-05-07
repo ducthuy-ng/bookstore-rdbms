@@ -43,6 +43,31 @@ app.post('/add', (req, res) => {
   res.send(`Add book`);
 });
 
+app.get('/charts', (req, res) => {
+  database
+    .countBookPerYear()
+    .then((bookNumPerYear) => {
+      res.render('charts', { bookNumPerYear: JSON.stringify(bookNumPerYear) });
+    })
+    .catch((err) => {
+      console.error(err);
+    });
+});
+
+app.get('/price-range', (req, res) => {
+  const lowerPrice = parseInt(String(req.query.lower) || '0') || 0;
+  const upperPrice = parseInt(String(req.query.upper) || '10000000') || 10000000;
+
+  database
+    .searchInPriceRange(lowerPrice, upperPrice)
+    .then((bookDto) => {
+      res.render('price-range', { bookDto: bookDto });
+    })
+    .catch((err) => {
+      console.error(err);
+    });
+});
+
 app.get('/:isbn', (req: Request<{ isbn: string }>, res) => {
   database
     .getBookByIsbn(req.params.isbn)

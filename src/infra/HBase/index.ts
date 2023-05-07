@@ -16,6 +16,7 @@ export class HBaseDB implements IDatabase {
   private static NUM_OF_BOOK_PER_PAGE = 10;
 
   private hbaseUrl = '';
+  private extendedRestApiServer = '';
 
   private rowKeyOfPageEndCache: string[] = [];
 
@@ -24,8 +25,9 @@ export class HBaseDB implements IDatabase {
     console.log(`[hbase]: Created HBase instance: ${this.hbaseUrl}`);
   }
 
-  private setUrl(hostname: string, port: number) {
+  private setUrl(hostname: string, port: number, extendedRestApiPort = 4000) {
     this.hbaseUrl = `http://${hostname}:${port}`;
+    this.extendedRestApiServer = `http://${hostname}:${extendedRestApiPort}`;
   }
 
   public static async createInstance(env: NodeJS.ProcessEnv): Promise<IDatabase> {
@@ -207,14 +209,21 @@ export class HBaseDB implements IDatabase {
     return resultList.map((row) => this.parseBasic(row));
   }
 
-  // TODO
-  countBookPerYear(): Promise<BookCountInYear[]> {
-    throw new Error('Method not implemented.');
+  async countBookPerYear(): Promise<BookCountInYear[]> {
+    const resp = await axios.get<BookCountInYear[]>(`${this.extendedRestApiServer}/years`, {
+      headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+    });
+
+    return resp.data;
   }
 
-  // TODO
-  searchInPriceRange(upperPrice: number, lowerPrice: number): Promise<SearchBookDto[]> {
-    throw new Error('Method not implemented.');
+  async searchInPriceRange(upperPrice: number, lowerPrice: number): Promise<SearchBookDto[]> {
+    const resp = await axios.get<SearchBookDto[]>(`${this.extendedRestApiServer}/search-price`, {
+      params: { lower: lowerPrice, upper: upperPrice },
+      headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+    });
+
+    return resp.data;
   }
 
   private decodeCellObject(cell: CellObject): CellObject {

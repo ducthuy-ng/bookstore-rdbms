@@ -6,6 +6,7 @@ services:
       dockerfile: hbase.Dockerfile
     ports:
       - '2181:2181'
+      - '4000:4000'
       - '8080:8080'
       - '8085:8085'
       - '9090:9090'
@@ -15,6 +16,7 @@ services:
       - HBASE_INITDB_FILE=/initdb/books_hbase.csv
     volumes:
       - ./data:/initdb:ro
+      # - ./bookstore-dbms/target:/app:ro
 
   # hdfs:
   #   image: enzo90910/multiarch-hadoop-singlenode:3.3.0

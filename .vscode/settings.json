@@ -31,5 +31,6 @@
       "database": "postgres",
       "username": "postgres"
     }
-  ]
+  ],
+  "java.configuration.updateBuildConfiguration": "interactive"
 }

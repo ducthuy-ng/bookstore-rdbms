@@ -1,0 +1,70 @@
+<html>
+
+{{> head title="Trang chủ"}}
+
+<body class="flex flex-col h-screen">
+    {{> header }}
+
+    <article class="m-2 h-full vw-100 flex flex-col grow">
+        <div class='pb-2'>
+            <a id='return-link' class="object-content flex gap-px no-underline">
+                <i class='material-icons text-xl'>arrow_back</i>
+                <div>
+                    Quay lại trang chủ
+                </div>
+            </a>
+        </div>
+        <div class="flex justify-between items-center">
+            <h2 class="text-2xl">Tìm sách theo giá</h2>
+            <form action="/price-range" method="get" class="w-fit flex items-stretch gap-1">
+                <input type="number" name="lower" placeholder="Giá nhỏ nhất"
+                    class="w-72 h-10 p-2 border-2 border-black rounded-xl overflow-clip grow">
+                <input type="text" name="upper" placeholder="Giá lớn nhất"
+                    class="w-72 h-10 p-2 border-2 border-black rounded-xl overflow-clip grow">
+                <button type="submit"
+                    class="w-10 border-2 border-black rounded-xl overflow-clip bg-blue-500 hover:bg-blue-600">
+                    <i class="material-icons text-white">search</i>
+                </button>
+            </form>
+        </div>
+
+        <div class='grid grid-cols-5 gap-2 m-2 grow'>
+            {{#each bookDto}}
+                <div class="p-1 max-h-80 border-2 border-gray-300 rounded flex flex-col items-center shadow hover:shadow-xl transition-shadow cursor-pointer hover hover:bg-slate-100"
+                    onclick="location.href='/{{this.isbn}}'">
+                    <img class="h-4/5" src='{{this.coverUrl}}' />
+                    <div class='card-body'>
+                        <h1 class='card-text text-lg'>{{this.name}}</h1>
+                    </div>
+                </div>
+            {{/each}}
+        </div>
+
+        {{!-- <div class="flex justify-between">
+            <a href="/charts" class="w3-button w3-border w3-blue-grey rounded-lg">Thống
+                kê</a>
+
+            <div class="flex items-center">
+                <a href="#">
+                    <i class='material-icons text-lg'>arrow_back</i>
+                </a>
+                <a href="#">
+                    <i class='material-icons text-lg'>arrow_forward</i>
+                </a>
+            </div>
+
+            <a href="/add" class="w3-button w3-border w3-blue-grey rounded-lg">Thêm sách</a>
+        </div> --}}
+    </article>
+
+    <script defer="true">
+        try {
+            const referrer = new URL(document.referrer);
+            if (referrer.origin === location.origin && referrer.pathname === '/')
+                document.getElementById('return-link').href = referrer.href
+        } catch { }
+    </script>
+
+</body>
+
+</html>

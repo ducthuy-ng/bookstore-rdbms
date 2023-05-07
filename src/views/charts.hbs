@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+
+{{> head title="Thống kê"}}
+
+
+<body>
+    {{> header }}
+    <div class="m-2">
+        <div class='pb-2'>
+            <a id='return-link' class="object-content flex gap-px no-underline">
+                <i class='material-icons text-xl'>arrow_back</i>
+                <div>
+                    Quay lại trang chủ
+                </div>
+            </a>
+        </div>
+
+        <h2 class="text-2xl">Thống kê</h2>
+
+        <div class="w-10/12 h-96 relative m-auto"><canvas id="acquisitions"></canvas></div>
+
+
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script defer="true">
+        const data = {{{ bookNumPerYear }}}
+        data.sort((book1, book2) => book1.year - book2.year);
+
+        async function renderChart() {
+            const bookPerYearChart = new Chart(
+                document.getElementById('acquisitions'),
+                {
+                    type: 'bar',
+                    data: {
+                        labels: data.map(row => row.year),
+                        datasets: [
+                            {
+                                label: 'Lượng sách xuất bản trong năm',
+                                data: data.map(row => row.bookNum)
+                            }
+                        ]
+                    },
+                    options: {
+                        maintainAspectRatio: false,
+                        layout: {
+                            padding: 20
+                        }
+                    }
+                }
+            );
+        }
+
+        renderChart();
+        try {
+            const referrer = new URL(document.referrer);
+            if (referrer.origin === location.origin && referrer.pathname === '/')
+                document.getElementById('return-link').href = referrer.href
+        } catch { }
+    </script>
+</body>
+
+</html>

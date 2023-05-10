@@ -2,6 +2,7 @@ import dotenv from 'dotenv';
 import express, { Application, Request, Response } from 'express';
 import hbs from 'hbs';
 import path from 'path';
+import bodyParser from 'body-parser';
 import { IDatabase } from './core/IDatabase';
 
 import { HBaseDB } from './infra/HBase';
@@ -18,6 +19,9 @@ app.use('/public', express.static(path.join(__dirname, '../public')));
 
 app.set('view engine', 'hbs');
 app.set('views', path.join(__dirname, '/views'));
+
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.json());
 
 hbs.registerPartials(path.join(__dirname + '/views/partials'));
 
@@ -39,9 +43,40 @@ app.get('/add', (req, res) => {
   res.render('book-add');
 });
 
-app.post('/add', (req, res) => {
-  res.send(`Add book`);
-});
+app.post(
+  '/add',
+  (
+    req: Request<
+      unknown,
+      unknown,
+      {
+        ISBN: string;
+        title: string;
+        authors: string;
+        file: string;
+      }
+    >,
+    res
+  ) => {
+    database
+      .addNewBook({
+        isbn: String(req.body.ISBN || ''),
+        name: String(req.body.title || ''),
+        numOfPage: 0,
+        author: String(req.body.authors || ''),
+        publishedYear: new Date().getFullYear(),
+        coverUrl: String(req.body.file || ''),
+        sellPrice: 0,
+      })
+      .then(() => {
+        res.render('book-add', { displaySuccess: true });
+      })
+      .catch((err) => {
+        console.error(err);
+        res.render('error');
+      });
+  }
+);
 
 app.get('/charts', (req, res) => {
   database

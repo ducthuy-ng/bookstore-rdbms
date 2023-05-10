@@ -72,12 +72,18 @@ export class PostgresSQL implements IDatabase {
   }
 
   async addNewBook(book: Book): Promise<OperationResult> {
-    const query = `INSERT INTO (isbn,name,numofpage,author,published_year,coverUrl,sellPrice) 
-    VALUES ('${book.isbn}', '${book.name}', ${book.numOfPage}, '${book.author}', ${book.publishedYear}, '${book.coverUrl}', ${book.sellPrice})`;
+    const query = 'INSERT INTO book VALUES ($1, $2, $3, $4, $5, $6, $7);';
     try {
-      await this.client.connect(); // creates connection
-      await this.client.query(query); // sends query
-      await this.client.end();
+      await this.client.query(query, [
+        book.isbn,
+        book.name,
+        book.numOfPage,
+        book.author,
+        book.publishedYear,
+        book.coverUrl,
+        book.sellPrice,
+      ]); // sends query
+
       return { success: true, message: 'OK' };
     } catch (error) {
       console.error(error);
@@ -87,11 +93,9 @@ export class PostgresSQL implements IDatabase {
   }
 
   async deleteBook(bookIsbn: string): Promise<OperationResult> {
-    const query = `DELETE FROM book WHERE isbn = '${bookIsbn}'`;
+    const query = 'DELETE FROM book WHERE isbn = $1';
     try {
-      await this.client.connect(); // creates connection
-      await this.client.query(query); // sends query
-      await this.client.end();
+      await this.client.query(query, [bookIsbn]); // sends query
       return { success: true, message: 'OK' };
     } catch (error) {
       console.error(error);

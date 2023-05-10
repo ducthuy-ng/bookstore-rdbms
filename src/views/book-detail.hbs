@@ -15,13 +15,38 @@
       </a>
     </div>
 
+    {{#if operationResult}}
+      <div class="p-2 w-full w3-red">{{operationResult.message}}</div>
+    {{/if}}
+
     {{#if book}}
       {{> book_info book=book}}
     {{else}}
       {{> book_not_found}}
     {{/if}}
 
+    <div class="flex justify-center">
+      <button onclick="document.getElementById('id01').style.display='block'" class="w3-button w3-red">Xoá</button>
+    </div>
+
   </article>
+
+  <form id="id01" class="w3-modal" method="post">
+    <div class="w3-modal-content">
+      <header class="w3-teal py-4">
+        <span class="w3-button w3-display-topright" onclick=hideModal()>&times;</span>
+        <h2 class="text-3xl text-center">Cảnh báo</h2>
+      </header>
+
+      <div class="p-4">
+        <p>Bạn có chắc chắn muốn xoá quyển sách này</p>
+        <div class="my-2 flex justify-end">
+          <button type="submit" class="w3-btn w3-sand">Có, tôi muốn xoá</button>
+          <button class="w3-btn w3-red" onclick=hideModal()>Huỷ</button>
+        </div>
+      </div>
+    </div>
+  </form>
 </body>
 
 <script defer='true'>
@@ -30,6 +55,10 @@
     if (referrer.origin === location.origin && referrer.pathname === '/')
       document.getElementById('return-link').href = referrer.href
   } catch { }
+
+  function hideModal(event) {
+    document.getElementById('id01').style.display = 'none';
+  }
 </script>
 
 </html>

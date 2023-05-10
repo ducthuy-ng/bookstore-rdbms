@@ -86,6 +86,7 @@ app.get('/charts', (req, res) => {
     })
     .catch((err) => {
       console.error(err);
+      res.render('error');
     });
 });
 
@@ -100,6 +101,7 @@ app.get('/price-range', (req, res) => {
     })
     .catch((err) => {
       console.error(err);
+      res.render('error');
     });
 });
 
@@ -111,6 +113,21 @@ app.get('/:isbn', (req: Request<{ isbn: string }>, res) => {
     })
     .catch(() => {
       res.sendStatus(500);
+    });
+});
+
+app.post('/:isbn', (req: Request<{ isbn: string }>, res) => {
+  database
+    .deleteBook(req.params.isbn)
+    .then((operationResult) => {
+      if (!operationResult.success) {
+        res.render('book-detail', { operationResult: operationResult });
+      } else {
+        res.redirect('/');
+      }
+    })
+    .catch((err) => {
+      console.error(err);
     });
 });
 

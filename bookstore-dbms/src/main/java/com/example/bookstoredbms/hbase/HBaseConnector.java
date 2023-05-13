@@ -5,7 +5,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-import org.apache.commons.math3.analysis.function.Add;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.CompareOperator;
@@ -26,13 +25,12 @@ import org.apache.hadoop.hbase.filter.FirstKeyOnlyFilter;
 import org.apache.hadoop.hbase.filter.RowFilter;
 import org.apache.hadoop.hbase.filter.SingleColumnValueFilter;
 import org.apache.hadoop.hbase.filter.SubstringComparator;
-import org.apache.hadoop.hbase.filter.FilterList.Operator;
 import org.apache.hadoop.hbase.util.Bytes;
 
-import com.example.bookstoredbms.dto.BookCountInYear;
-import com.example.bookstoredbms.hbase.exceptions.IsbnNotFound;
 import com.example.bookstoredbms.dto.Book;
 import com.example.bookstoredbms.dto.BookBrief;
+import com.example.bookstoredbms.dto.BookCountInYear;
+import com.example.bookstoredbms.hbase.exceptions.IsbnNotFound;
 
 public class HBaseConnector {
     private Configuration hbaseConf;

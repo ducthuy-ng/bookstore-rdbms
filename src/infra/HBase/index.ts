@@ -1,10 +1,8 @@
 import { Book } from '../../core/Book';
 import { BookCountInYear, IDatabase, OperationResult, SearchBookDto } from '../../core/IDatabase';
 
-import axios, { AxiosError } from 'axios';
+import axios from 'axios';
 import { FailedToCreateDb, InvalidEnvVariable } from '../DatabaseBuilder';
-import { TableListDto } from './dto';
-import { BookTableNotExistsInHBase, FailedToConnectToHBase } from './exceptions';
 
 export class HBaseDB implements IDatabase {
   private static DELIMITER = '@@@';

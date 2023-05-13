@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import org.apache.commons.math3.analysis.function.Add;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.CompareOperator;
@@ -13,21 +14,32 @@ import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Admin;
 import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.ConnectionFactory;
+import org.apache.hadoop.hbase.client.Delete;
+import org.apache.hadoop.hbase.client.Get;
+import org.apache.hadoop.hbase.client.Put;
+import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.filter.BinaryComparator;
 import org.apache.hadoop.hbase.filter.FilterList;
 import org.apache.hadoop.hbase.filter.FirstKeyOnlyFilter;
+import org.apache.hadoop.hbase.filter.RowFilter;
 import org.apache.hadoop.hbase.filter.SingleColumnValueFilter;
+import org.apache.hadoop.hbase.filter.SubstringComparator;
+import org.apache.hadoop.hbase.filter.FilterList.Operator;
 import org.apache.hadoop.hbase.util.Bytes;
 
 import com.example.bookstoredbms.dto.BookCountInYear;
-import com.example.bookstoredbms.dto.BookDto;
+import com.example.bookstoredbms.hbase.exceptions.IsbnNotFound;
+import com.example.bookstoredbms.dto.Book;
+import com.example.bookstoredbms.dto.BookBrief;
 
 public class HBaseConnector {
     private Configuration hbaseConf;
     private Table bookTable;
     private Admin hbaseAdminInstance;
+
+    private static byte[] COLUMN_FAMILY = Bytes.toBytes("info");
 
     public HBaseConnector() throws IOException {
         readHbaseConnectConfiguration();
@@ -53,19 +65,84 @@ public class HBaseConnector {
         return parsedTableNames;
     }
 
-    // public BookDto getBook() throws IOException {
-    // var bookKey = "9782271852030@@@Spares";
+    public Book searchByIsbn(String isbn) throws IOException {
+        var getAction = new Get(Bytes.toBytes(isbn));
+        getAction.addFamily(COLUMN_FAMILY);
 
-    // var getAction = new Get(Bytes.toBytes(bookKey));
-    // var result = bookTable.get(getAction);
+        var result = bookTable.get(getAction);
 
-    // System.out.println(result.toString());
-    // return null;
-    // }
+        if (result.isEmpty())
+            throw new IsbnNotFound(isbn);
+
+        return getBookFromResult(result);
+    }
+
+    public void addBook(Book book) throws IOException {
+        var rowKey = Bytes.toBytes(book.getIsbn());
+
+        var bookName = Bytes.toBytes(book.getName());
+        var pageNumString = Bytes.toBytes(String.valueOf(book.getNumOfPage()));
+        var authors = Bytes.toBytes(book.getAuthor());
+        var publishedYear = Bytes.toBytes(String.valueOf(book.getPublishedYear()));
+        var coverUrl = Bytes.toBytes(book.getCoverUrl());
+
+        var paddedPrice = convertToStringWithPadding(book.getSellPrice());
+        var price = Bytes.toBytes(String.valueOf(paddedPrice));
+
+        var putAction = new Put(rowKey);
+        putAction.addColumn(COLUMN_FAMILY, Bytes.toBytes("name"), bookName);
+        putAction.addColumn(COLUMN_FAMILY, Bytes.toBytes("pageNum"), pageNumString);
+        putAction.addColumn(COLUMN_FAMILY, Bytes.toBytes("authors"), authors);
+        putAction.addColumn(COLUMN_FAMILY, Bytes.toBytes("publishedYear"), publishedYear);
+        putAction.addColumn(COLUMN_FAMILY, Bytes.toBytes("coverUrl"), coverUrl);
+        putAction.addColumn(COLUMN_FAMILY, Bytes.toBytes("price"), price);
+
+        bookTable.put(putAction);
+    }
+
+    public void deleteBookByIsbn(String isbn) throws IOException {
+        var rowKey = Bytes.toBytes(isbn);
+        var deleteAction = new Delete(rowKey);
+        bookTable.delete(deleteAction);
+    }
+
+    public List<BookBrief> searchBook(String queryNameOrIsbn, Integer limit, Integer offset) throws IOException {
+        var scanAction = new Scan();
+        scanAction.addFamily(COLUMN_FAMILY);
+        scanAction.setLimit(offset + limit);
+
+        var isbnFilter = new RowFilter(
+                CompareOperator.EQUAL,
+                new SubstringComparator(queryNameOrIsbn));
+
+        var nameFilter = new SingleColumnValueFilter(
+                COLUMN_FAMILY,
+                Bytes.toBytes("name"),
+                CompareOperator.EQUAL,
+                new SubstringComparator(queryNameOrIsbn));
+
+        scanAction.setFilter(new FilterList(FilterList.Operator.MUST_PASS_ONE, isbnFilter, nameFilter));
+
+        var searchedBook = new ArrayList<BookBrief>(limit);
+        var resultScanner = bookTable.getScanner(scanAction);
+
+        resultScanner.next(offset);
+
+        while (true) {
+            var result = resultScanner.next();
+            if (result == null)
+                break;
+
+            searchedBook.add(getBookBriefFromResult(result));
+        }
+
+        resultScanner.close();
+        return searchedBook;
+    }
 
     public List<BookCountInYear> countBookOfYear() throws IOException {
         var scanAction = new Scan();
-        scanAction.addColumn(Bytes.toBytes("info"), Bytes.toBytes("publishedYear"));
+        scanAction.addColumn(COLUMN_FAMILY, Bytes.toBytes("publishedYear"));
         scanAction.setFilter(new FirstKeyOnlyFilter());
 
         var yearCounter = new HashMap<Integer, Integer>();
@@ -99,30 +176,29 @@ public class HBaseConnector {
 
     }
 
-    public List<BookDto> searchBookInPriceRange(Integer lowerBound, Integer upperBound, Integer offset, Integer limit)
+    public List<BookBrief> searchBookInPriceRange(Integer lowerBound, Integer upperBound, Integer offset, Integer limit)
             throws IOException {
         var scanAction = new Scan();
-        scanAction.addColumn(Bytes.toBytes("info"), Bytes.toBytes("basic"));
         scanAction.setLimit(offset + limit);
 
         var upperPaddedPrice = convertToStringWithPadding(upperBound);
         var lowerPaddedPrice = convertToStringWithPadding(lowerBound);
 
         var upperBoundFilter = new SingleColumnValueFilter(
-                Bytes.toBytes("info"),
+                COLUMN_FAMILY,
                 Bytes.toBytes("price"),
                 CompareOperator.LESS_OR_EQUAL,
                 new BinaryComparator(Bytes.toBytes(upperPaddedPrice)));
 
         var lowerBoundFilter = new SingleColumnValueFilter(
-                Bytes.toBytes("info"),
+                COLUMN_FAMILY,
                 Bytes.toBytes("price"),
                 CompareOperator.GREATER_OR_EQUAL,
                 new BinaryComparator(Bytes.toBytes(lowerPaddedPrice)));
 
         scanAction.setFilter(new FilterList(lowerBoundFilter, upperBoundFilter));
 
-        var searchedBook = new ArrayList<BookDto>(limit);
+        var searchedBook = new ArrayList<BookBrief>(limit);
         var resultScanner = bookTable.getScanner(scanAction);
 
         resultScanner.next(offset);
@@ -132,18 +208,37 @@ public class HBaseConnector {
             if (result == null)
                 break;
 
-            var rawInfoBasic = Bytes.toString(result.getValue(Bytes.toBytes("info"), Bytes.toBytes("basic")));
-            var splittedBasicInfo = rawInfoBasic.split("@@@");
-
-            searchedBook.add(
-                    new BookDto(
-                            splittedBasicInfo[0],
-                            splittedBasicInfo[1],
-                            Integer.parseInt(splittedBasicInfo[2]),
-                            splittedBasicInfo[3]));
+            searchedBook.add(getBookBriefFromResult(result));
         }
 
         resultScanner.close();
         return searchedBook;
+    }
+
+    private BookBrief getBookBriefFromResult(Result result) {
+        var isbn = Bytes.toString(result.getRow());
+        var bookName = Bytes.toString(result.getValue(COLUMN_FAMILY, Bytes.toBytes("name")));
+        var publishedYear = convertHbaseBytesToInt(
+                result.getValue(COLUMN_FAMILY, Bytes.toBytes("publishedYear")));
+        var coverUrl = Bytes.toString(result.getValue(COLUMN_FAMILY, Bytes.toBytes("coverUrl")));
+
+        return new BookBrief(isbn, bookName, publishedYear, coverUrl);
+    }
+
+    private Book getBookFromResult(Result result) {
+        var isbn = Bytes.toString(result.getRow());
+        var bookName = Bytes.toString(result.getValue(COLUMN_FAMILY, Bytes.toBytes("name")));
+        var pageNum = convertHbaseBytesToInt(result.getValue(COLUMN_FAMILY, Bytes.toBytes("pageNum")));
+        var authors = Bytes.toString(result.getValue(COLUMN_FAMILY, Bytes.toBytes("authors")));
+        var publishedYear = convertHbaseBytesToInt(
+                result.getValue(COLUMN_FAMILY, Bytes.toBytes("publishedYear")));
+        var coverUrl = Bytes.toString(result.getValue(COLUMN_FAMILY, Bytes.toBytes("coverUrl")));
+        var price = convertHbaseBytesToInt(result.getValue(COLUMN_FAMILY, Bytes.toBytes("price")));
+
+        return new Book(isbn, bookName, authors, pageNum, publishedYear, coverUrl, price);
+    }
+
+    private static Integer convertHbaseBytesToInt(byte[] input) {
+        return Integer.valueOf(Bytes.toString(input));
     }
 }

@@ -3,7 +3,7 @@ version: '3.8'
 services:
   hbase:
     build:
-      dockerfile: hbase.dev.Dockerfile
+      dockerfile: hbase.Dockerfile
     ports:
       - '2181:2181'
       - '4000:4000'
@@ -16,7 +16,6 @@ services:
       - HBASE_INITDB_FILE=/initdb/books_hbase.csv
     volumes:
       - ./data:/initdb:ro
-      - ./bookstore-dbms/target:/app:ro
 
   db:
     image: postgres:15.2-alpine3.17

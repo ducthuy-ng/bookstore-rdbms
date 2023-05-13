@@ -2,13 +2,10 @@
 
 set -euf
 
-start_rest() {
-    sleep 15s
-    hbase-daemon.sh start rest -p 8080
-}
+LOCAL_SERVER_PID=-1
 
 start_local_server() {
-    sleep 17s
+    sleep 15s
     java -jar /app/bookstore-dbms-0.0.1-SNAPSHOT.jar &
     LOCAL_SERVER_PID=$!
 }
@@ -33,25 +30,32 @@ init_db() {
     hbase org.apache.hadoop.hbase.mapreduce.ImportTsv \
         -Dcreate.table=yes \
         -Dimporttsv.separator='|' \
-        -Dimporttsv.columns=HBASE_ROW_KEY,info:basic,info:details,info:price,info:publishedYear \
+        -Dimporttsv.columns=HBASE_ROW_KEY,info:name,info:pageNum,info:authors,info:publishedYear,info:coverUrl,info:price,info:queryCol \
         book \
         file://"$HBASE_INITDB_FILE"
-
 }
 
 start-hbase.sh
 
 start_logging
-start_rest
-start_local_server
+while getopts "s" OPTION; do
+    case "$OPTION" in
+    s)
+        echo "Start local server"
+        start_local_server
+        ;;
+    *) ;;
+    esac
+done
 
 init_db
 
 terminate() {
-    hbase-daemon.sh stop rest
     stop-hbase.sh
 
-    kill "$LOCAL_SERVER_PID"
+    if [ "$LOCAL_SERVER_PID" != "-1" ]; then
+        kill "$LOCAL_SERVER_PID"
+    fi
 
     kill $TAIL_PID
     exit

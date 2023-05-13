@@ -1,57 +1,53 @@
 <html>
-  <head>
-    <meta charset='UTF-8' />
-    <meta
-      name='viewport'
-      content='width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0'
-    />
-    <link href='public/stylesheet/book-add.css' rel='stylesheet' />
-    <meta http-equiv='X-UA-Compatible' content='ie=edge' />
-    <title>Add new book</title>
-  </head>
 
-  <body>
-    <div class='form'>
-      <h1>Add New Book</h1>
-      <img src='public/images/BookIcon.png' alt='Book Icon' />
-      <form>
-        <label for='ISBN'>ISBN
-          <input
-            id='ISBN'
-            name='ISBN'
-            type='text'
-            placeholder="Enter book's ISBN"
-            required
-          /></label>
-        <label for='title'>Title
-          <input
-            id='title'
-            name='title'
-            type='text'
-            placeholder="Enter book's name"
-            required
-          /></label>
-        <label for='author'>Author
-          <input
-            id='author'
-            name='author'
-            type='text'
-            placeholder="Enter book's author"
-            required
-          /></label>
-        <label for='genre'>Genre
-          <input id='genre' name='genre' type='text' placeholder="Enter book's genre" /></label>
-        <label for='description'>Description
-          <textarea
-            id='description'
-            name='description'
-            placeholder="Enter book's description"
-            rows='3'
-          ></textarea>
-        </label>
-        <label for='title'>Upload your book <input id='file' name='file' type='file' /></label>
-        <label for='add'><input id='add' name='add' type='button' value='+ Add book' /></label>
-      </form>
-    </div>
-  </body>
+<head>
+  <meta charset='UTF-8' />
+  <meta name='viewport'
+    content='width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0' />
+  <link href='public/stylesheet/book-add.css' rel='stylesheet' />
+  <meta http-equiv='X-UA-Compatible' content='ie=edge' />
+  {{!-- <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css"> --}}
+  <title>Add new book</title>
+</head>
+
+<body>
+  <div class='form'>
+    <a href="/">
+      <div>
+        <h1>Add New Book</h1>
+        <img src='public/images/BookIcon.png' alt='Book Icon' />
+      </div>
+    </a>
+
+    {{#if displaySuccess}}
+      <div style="background-color: green; color: white; padding: 20px">
+        <h3>Tạo sách thành công!</h3>
+        {{!-- <p>Green often indicates something successful or positive.</p> --}}
+      </div>
+    {{/if}}
+
+    <form method="post" action="/add">
+      <label for='ISBN'>ISBN
+        <input id='ISBN' name='ISBN' type='text' placeholder="Enter book's ISBN" required /></label>
+      <label for='title'>Title
+        <input id='title' name='title' type='text' placeholder="Enter book's name" required /></label>
+      <label for='page_num'>Number of page
+        <input id='page_num' name='page_num' type='number' placeholder="Enter book page num" /></label>
+      <label for='author'>Author
+        <input id='author' name='author' type='text' placeholder="Enter book's author" required /></label>
+      <label for='year'>Published year
+        <input id='year' name='year' type='month' placeholder="Enter book's publishing year" /></label>
+      <label for='price'>Sell price
+        <input id='price' name='price' type='number' placeholder="Sell price" required /></label>
+      {{!-- <label for='genre'>Genre
+        <input id='genre' name='genre' type='text' placeholder="Enter book's genre" /></label> --}}
+      {{!-- <label for='description'>Description
+        <textarea id='description' name='description' placeholder="Enter book's description" rows='3'></textarea> --}}
+      </label>
+      <label for='title'>Upload your book <input id='file' name='file' type='file' /></label>
+      <label for='add'><input id='add' type='submit' value='+ Add book' /></label>
+    </form>
+  </div>
+</body>
+
 </html>

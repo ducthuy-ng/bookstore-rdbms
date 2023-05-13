@@ -6,35 +6,19 @@
   {{> header }}
 
   <article class="m-2 h-full vw-100 flex flex-col grow">
-    <div class="flex justify-between items-center">
+    <div class="flex justify-between items-baseline">
       <h2 class="text-2xl">Tổng hợp sách</h2>
-      <form action="/" method="get" class="w-fit flex items-stretch border-2 border-black rounded-xl overflow-clip">
-        <input type="text" name="book-name" placeholder="Nhập tên sách" class="w-72 h-10 p-2 outline-none grow">
+      <form action="/" method="get" class="w-fit flex border-2 border-black rounded-xl overflow-clip">
+        <input type="text" name="book-name" placeholder="Nhập tên sách" class="w-72 h-10 p-2 outline-none grow"
+          value="{{queryBookName}}">
         <button type="submit" class="w-10 bg-blue-500 hover:bg-blue-600">
           <i class="material-icons text-white">search</i>
         </button>
       </form>
     </div>
 
-    {{!-- <div class='flex flex-wrap items-stretch box-content grow'>
+    <div class='grid grid-cols-5 gap-2 my-2 grow'>
       {{#each data}}
-        <div class='w-1/5 p-1'>
-
-          <div class="border-2 rounded h-full flex flex-col items-center shadow cursor-pointer hover hover:bg-slate-50"
-            onclick="location.href='/{{this.isbn}}'">
-            <img class="h-4/5" src='{{this.coverUrl}}' />
-            <div class='card-body'>
-              <h1 class='card-text text-lg'>{{this.name}}</h1>
-            </div>
-          </div>
-        </div>
-      {{/each}}
-    </div> --}}
-
-    <div class='grid grid-cols-5 gap-2 m-2 grow'>
-      {{#each data}}
-        {{!-- <div class=''> --}}
-
         <div
           class="p-1 max-h-80 border-2 border-gray-300 rounded flex flex-col items-center shadow hover:shadow-xl transition-shadow cursor-pointer hover hover:bg-slate-100"
           onclick="location.href='/{{this.isbn}}'">
@@ -43,7 +27,6 @@
             <h1 class='card-text text-lg'>{{this.name}}</h1>
           </div>
         </div>
-        {{!-- </div> --}}
       {{/each}}
     </div>
 
@@ -55,14 +38,14 @@
       <a href="/price-range" class="w3-button w3-border w3-blue-grey rounded-lg">Tìm kiếm theo giá</a>
 
 
-      <div class="flex items-center">
+      {{!-- <div class="flex items-center">
         <a href="#">
           <i class='material-icons text-lg'>arrow_back</i>
         </a>
         <a href="#">
           <i class='material-icons text-lg'>arrow_forward</i>
         </a>
-      </div>
+      </div> --}}
 
       <a href="/add" class="w3-button w3-border w3-blue-grey rounded-lg">Thêm sách</a>
     </div>

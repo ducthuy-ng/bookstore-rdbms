@@ -12,7 +12,13 @@
 
 <body>
   <div class='form'>
-    <h1>Add New Book</h1>
+    <a href="/">
+      <div>
+        <h1>Add New Book</h1>
+        <img src='public/images/BookIcon.png' alt='Book Icon' />
+      </div>
+    </a>
+
     {{#if displaySuccess}}
       <div style="background-color: green; color: white; padding: 20px">
         <h3>Tạo sách thành công!</h3>
@@ -20,7 +26,6 @@
       </div>
     {{/if}}
 
-    <img src='public/images/BookIcon.png' alt='Book Icon' />
     <form method="post" action="/add">
       <label for='ISBN'>ISBN
         <input id='ISBN' name='ISBN' type='text' placeholder="Enter book's ISBN" required /></label>

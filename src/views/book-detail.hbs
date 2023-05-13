@@ -52,8 +52,13 @@
 <script defer='true'>
   try {
     const referrer = new URL(document.referrer);
-    if (referrer.origin === location.origin && referrer.pathname === '/')
-      document.getElementById('return-link').href = referrer.href
+    const returnLink = document.getElementById('return-link')
+
+    if (referrer.origin === location.origin
+      && (referrer.pathname === '/' || referrer.pathname === '/price-range'))
+      returnLink.href = referrer.href
+    else
+      returnLink.href = '/';
   } catch { }
 
   function hideModal(event) {

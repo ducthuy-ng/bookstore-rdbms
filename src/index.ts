@@ -1,8 +1,8 @@
+import bodyParser from 'body-parser';
 import dotenv from 'dotenv';
 import express, { Application, Request, Response } from 'express';
 import hbs from 'hbs';
 import path from 'path';
-import bodyParser from 'body-parser';
 import { IDatabase } from './core/IDatabase';
 
 import { HBaseDB } from './infra/HBase';
@@ -31,7 +31,7 @@ app.get('/', (req: Request, res: Response) => {
   database
     .search(String(queryBookName), 10, 0)
     .then((searchResults) => {
-      res.render('index', { data: searchResults });
+      res.render('index', { data: searchResults, queryBookName: queryBookName });
     })
     .catch((err) => {
       console.error(err);
@@ -52,8 +52,11 @@ app.post(
       {
         ISBN: string;
         title: string;
-        authors: string;
+        author: string;
         file: string;
+        page_num: string;
+        year: string;
+        price: string;
       }
     >,
     res
@@ -62,11 +65,11 @@ app.post(
       .addNewBook({
         isbn: String(req.body.ISBN || ''),
         name: String(req.body.title || ''),
-        numOfPage: 0,
-        author: String(req.body.authors || ''),
-        publishedYear: new Date().getFullYear(),
+        numOfPage: parseInt(req.body.page_num) || 0,
+        author: String(req.body.author || ''),
+        publishedYear: parseInt(req.body.year) || new Date().getFullYear(),
         coverUrl: String(req.body.file || ''),
-        sellPrice: 0,
+        sellPrice: parseInt(req.body.price),
       })
       .then(() => {
         res.render('book-add', { displaySuccess: true });
@@ -95,9 +98,13 @@ app.get('/price-range', (req, res) => {
   const upperPrice = parseInt(String(req.query.upper) || '10000000') || 10000000;
 
   database
-    .searchInPriceRange(lowerPrice, upperPrice)
+    .searchInPriceRange(upperPrice, lowerPrice)
     .then((bookDto) => {
-      res.render('price-range', { bookDto: bookDto });
+      res.render('price-range', {
+        bookDto: bookDto,
+        lowerPrice: lowerPrice,
+        upperPrice: upperPrice,
+      });
     })
     .catch((err) => {
       console.error(err);

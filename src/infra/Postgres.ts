@@ -93,9 +93,8 @@ export class PostgresSQL implements IDatabase {
   }
 
   async deleteBook(bookIsbn: string): Promise<OperationResult> {
-    const query = 'DELETE FROM book WHERE isbn = $1';
     try {
-      await this.client.query(query, [bookIsbn]); // sends query
+      await this.client.query('DELETE FROM book WHERE isbn = $1', [bookIsbn]); // sends query
       return { success: true, message: 'OK' };
     } catch (error) {
       console.error(error);
@@ -105,9 +104,10 @@ export class PostgresSQL implements IDatabase {
   }
 
   async countBookPerYear(): Promise<BookCountInYear[]> {
-    const query = `SELECT published_year, COUNT(*) FROM book GROUP BY published_year ORDER BY published_year`;
     try {
-      const { rows } = await this.client.query<YearDto>(query);
+      const { rows } = await this.client.query<YearDto>(
+        'SELECT published_year, COUNT(*) FROM book GROUP BY published_year ORDER BY published_year'
+      );
       const ans: BookCountInYear[] = [];
       for (let i = 0; i < rows.length; i++) {
         ans.push({
@@ -117,16 +117,20 @@ export class PostgresSQL implements IDatabase {
       }
       return ans;
     } catch (error) {
+      console.error(error);
       return [];
     }
   }
 
   async searchInPriceRange(upperPrice: number, lowerPrice: number): Promise<SearchBookDto[]> {
-    const query = `SELECT * FROM book WHERE sellPrice <= ${upperPrice} AND sellPrice >= ${lowerPrice}`;
     try {
-      const { rows } = await this.client.query<PostgresDto>(query);
+      const { rows } = await this.client.query<PostgresDto>(
+        'SELECT * FROM book WHERE sell_price >= $1 AND sell_price <= $2 LIMIT 10',
+        [lowerPrice, upperPrice]
+      );
 
       const ans: SearchBookDto[] = [];
+
       for (let i = 0; i < rows.length; i++) {
         ans.push({
           isbn: rows[i].isbn,
@@ -137,15 +141,18 @@ export class PostgresSQL implements IDatabase {
       }
       return ans;
     } catch (error) {
+      console.error(error);
       return [];
     }
   }
 
   async search(queryBookName: string, limit: number, offset: number): Promise<SearchBookDto[]> {
-    queryBookName = `%${queryBookName}%`;
-    const query = 'SELECT * FROM book WHERE name ILIKE $1 OFFSET $2 LIMIT $3;';
     try {
-      const { rows } = await this.client.query<PostgresDto>(query, [queryBookName, offset, limit]);
+      queryBookName = `%${queryBookName}%`;
+      const { rows } = await this.client.query<PostgresDto>(
+        'SELECT * FROM book WHERE name ILIKE $1 OFFSET $2 LIMIT $3;',
+        [queryBookName, offset, limit]
+      );
 
       const ans: SearchBookDto[] = [];
       for (let i = 0; i < rows.length; i++) {
@@ -158,14 +165,16 @@ export class PostgresSQL implements IDatabase {
       }
       return ans;
     } catch (error) {
+      console.error(error);
       return [];
     }
   }
 
   async getBookByIsbn(bookIsbn: string): Promise<Book | null> {
-    const query = `SELECT * FROM book WHERE isbn = '${bookIsbn}'`;
     try {
-      const { rows } = await this.client.query<PostgresDto>(query);
+      const { rows } = await this.client.query<PostgresDto>('SELECT * FROM book WHERE isbn = $1', [
+        bookIsbn,
+      ]);
 
       if (rows.length === 0) {
         return null;

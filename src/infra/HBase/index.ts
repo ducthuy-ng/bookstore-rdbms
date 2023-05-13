@@ -3,13 +3,8 @@ import { BookCountInYear, IDatabase, OperationResult, SearchBookDto } from '../.
 
 import axios, { AxiosError } from 'axios';
 import { FailedToCreateDb, InvalidEnvVariable } from '../DatabaseBuilder';
-import { CellObject, HBaseBookDto, HBaseRow, TableListDto } from './dto';
-import {
-  BookTableNotExistsInHBase,
-  FailedToConnectToHBase,
-  FailedToCreateNewScanner,
-  IsbnNotExist,
-} from './exceptions';
+import { TableListDto } from './dto';
+import { BookTableNotExistsInHBase, FailedToConnectToHBase } from './exceptions';
 
 export class HBaseDB implements IDatabase {
   private static DELIMITER = '@@@';
@@ -17,8 +12,6 @@ export class HBaseDB implements IDatabase {
 
   private hbaseUrl = '';
   private extendedRestApiServer = '';
-
-  private rowKeyOfPageEndCache: string[] = [];
 
   constructor(hostname: string, port: number) {
     this.setUrl(hostname, port);
@@ -52,166 +45,81 @@ export class HBaseDB implements IDatabase {
     return newHbaseInstance;
   }
 
-  private async checkConnection(): Promise<OperationResult> {
-    try {
-      const resp = await axios.get<TableListDto>(`${this.hbaseUrl}/`);
-
-      if (resp.status !== 200) {
-        throw new FailedToConnectToHBase(this.hbaseUrl);
-      }
-
-      const tableNames = resp.data.table;
-
-      if (!tableNames.some((table) => table.name === 'book')) {
-        throw new BookTableNotExistsInHBase();
-      }
-
-      console.log('[hbase]: Connect successfully to HBase instance');
-      return { success: true, message: 'Connect successfully to HBase instance' };
-    } catch (err) {
-      if (err instanceof AxiosError || err instanceof TypeError)
-        return { success: false, message: `Failed to connect to HBase ${this.hbaseUrl}` };
-
-      console.error(err);
-      return { success: false, message: `Unknown error ${String(err)}` };
-    }
+  private checkConnection(): Promise<OperationResult> {
+    return Promise.resolve({
+      success: true,
+      message: 'Connect successfully to HBase instance',
+    });
   }
 
   async addNewBook(book: Book): Promise<OperationResult> {
-    const rowKey = `${book.isbn}${HBaseDB.DELIMITER}${book.name}`;
-    const infoBasic = `${book.isbn}${HBaseDB.DELIMITER}${book.name}${HBaseDB.DELIMITER}${book.publishedYear}${HBaseDB.DELIMITER}${book.coverUrl}`;
-    const infoDetails = `${book.numOfPage}${HBaseDB.DELIMITER}${book.author}${HBaseDB.DELIMITER}${book.sellPrice}`;
+    const response = await axios.post(`${this.extendedRestApiServer}/books`, book, {
+      validateStatus: () => true,
+    });
 
-    const encodedRowKey = this.encodeBase64(rowKey);
-
-    const encodedBook: HBaseBookDto = {
-      Row: [
-        {
-          key: encodedRowKey,
-          Cell: [
-            {
-              column: 'aW5mbzpiYXNpYw==',
-              $: this.encodeBase64(infoBasic),
-            },
-            {
-              column: 'aW5mbzpkZXRhaWxz',
-              $: this.encodeBase64(infoDetails),
-            },
-          ],
-        },
-      ],
-    };
-
-    try {
-      await axios.put(`${this.hbaseUrl}/book/${encodedRowKey}`, encodedBook, {
-        headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
-      });
-
-      console.log('added book with ISBN', book.isbn);
-
-      return { success: true, message: 'Add book successfully' };
-    } catch (err) {
-      console.error(err);
-
-      if (err instanceof Error) return { success: false, message: err.message };
-      return { success: false, message: 'Unknown error' };
+    if (response.status !== 200) {
+      return {
+        success: false,
+        message: String(response.data),
+      };
     }
+
+    return {
+      success: true,
+      message: 'Add book successfully',
+    };
   }
 
   async deleteBook(isbn: string): Promise<OperationResult> {
-    try {
-      const key = await this.getKeyOfIsbn(isbn);
-      await axios.delete(`${this.hbaseUrl}/book/${key}`);
-
-      console.log('deleted book with ISBN', isbn);
-
-      return { success: true, message: 'Deleted successfully' };
-    } catch (err) {
-      console.error(err);
-
-      if (err instanceof IsbnNotExist) return { success: false, message: 'Invalid ISBN' };
-      if (err instanceof AxiosError) return { success: false, message: err.message };
-      return { success: false, message: 'Internal error' };
-    }
-  }
-
-  async getBookByIsbn(isbn: string): Promise<Book | null> {
-    let key: string;
-    try {
-      key = await this.getKeyOfIsbn(isbn);
-    } catch (err) {
-      if (err instanceof IsbnNotExist) return null;
-      throw err;
-    }
-
-    const resp = await axios.get<HBaseBookDto>(`${this.hbaseUrl}/book/${key}`, {
-      headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+    const response = await axios.delete(`${this.extendedRestApiServer}/books/${isbn}`, {
+      validateStatus: () => true,
     });
 
-    if (resp.data['Row'].length !== 1) {
-      return null;
+    if (response.status !== 200) {
+      return {
+        success: false,
+        message: String(response.data),
+      };
     }
-
-    const parsedCellObjects = resp.data['Row'][0].Cell.map((cell) => this.decodeCellObject(cell));
-
-    let basicColValue = [
-      '0',
-      'Unknown',
-      'https://media.istockphoto.com/photos/blank-book-cover-isolated-on-white-picture-id478720334',
-      '0',
-    ].join(HBaseDB.DELIMITER);
-    let detailsColValue = ['0', 'Unknown', '0'].join(HBaseDB.DELIMITER);
-
-    parsedCellObjects.forEach((cellObject) => {
-      if (cellObject.column === 'info:basic') basicColValue = cellObject.$;
-      if (cellObject.column === 'info:details') detailsColValue = cellObject.$;
-    });
-
-    const [, name, publishedYear, coverUrl] = basicColValue.split(HBaseDB.DELIMITER);
-    const [numOfPage, author, sellPrice] = detailsColValue.split(HBaseDB.DELIMITER);
 
     return {
-      isbn: isbn,
-      name: name,
-      publishedYear: this.parseIntWithSeparator(publishedYear),
-      coverUrl: coverUrl,
-      numOfPage: this.parseIntWithSeparator(numOfPage),
-      author: author,
-      sellPrice: this.parseIntWithSeparator(sellPrice),
+      success: true,
+      message: 'Deleted successfully',
     };
   }
 
+  async getBookByIsbn(isbn: string): Promise<Book | null> {
+    const response = await axios.get<Book>(`${this.extendedRestApiServer}/books/${isbn}`, {
+      validateStatus: () => true,
+    });
+
+    if (response.status !== 200) {
+      return null;
+    }
+
+    return response.data;
+  }
+
   async search(queryBookName: string, limit: number, offset: number): Promise<SearchBookDto[]> {
-    const scannerRequestXML = `
-    <Scanner 
-      batch="${offset + limit}"
-      maxVersions="1">
-      <column>aW5mbzpiYXNpYw==</column>
-      <filter>
-        {
-          "op":"EQUAL",
-          "type":"RowFilter",
-          "family":"ZGV0YWlscw",
-          "qualifier":"aW5mbw==",
-          "comparator": {
-            "value": "${queryBookName}", 
-            "type": "SubstringComparator"
-          }
-        }
-      </filter>
-    </Scanner>`;
+    const response = await axios.get<SearchBookDto[]>(`${this.extendedRestApiServer}/books`, {
+      params: {
+        queryBookName: queryBookName,
+        limit: limit,
+        offset: offset,
+      },
+      validateStatus: () => true,
+    });
 
-    const searchBooks = await this.performScanRequest(scannerRequestXML);
+    if (response.status !== 200) {
+      return [];
+    }
 
-    if (searchBooks === null) return [];
-
-    const resultList = searchBooks['Row'].slice(offset);
-    return resultList.map((row) => this.parseBasic(row));
+    return response.data;
   }
 
   async countBookPerYear(): Promise<BookCountInYear[]> {
     const resp = await axios.get<BookCountInYear[]>(`${this.extendedRestApiServer}/years`, {
-      headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+      validateStatus: () => true,
     });
 
     return resp.data;
@@ -220,101 +128,9 @@ export class HBaseDB implements IDatabase {
   async searchInPriceRange(upperPrice: number, lowerPrice: number): Promise<SearchBookDto[]> {
     const resp = await axios.get<SearchBookDto[]>(`${this.extendedRestApiServer}/search-price`, {
       params: { lower: lowerPrice, upper: upperPrice },
-      headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+      validateStatus: () => true,
     });
 
     return resp.data;
-  }
-
-  private decodeCellObject(cell: CellObject): CellObject {
-    return {
-      column: Buffer.from(cell.column, 'base64').toString(),
-      timestamp: cell.timestamp,
-      $: Buffer.from(cell.$, 'base64').toString(),
-    };
-  }
-
-  private parseIntWithSeparator(rawString: string | undefined) {
-    if (rawString === undefined) {
-      rawString = '0';
-    }
-
-    return parseInt(rawString.replace(/,/g, ''));
-  }
-
-  private async performScanRequest(scannerRequestXML: string): Promise<HBaseBookDto | null> {
-    try {
-      const resp = await axios.put<string>(`${this.hbaseUrl}/book/scanner`, scannerRequestXML, {
-        headers: { 'Content-Type': 'text/xml', Accept: 'text/xml' },
-      });
-
-      const scannerUrl = String(resp.headers['location']);
-
-      if (resp.status !== 201 || scannerUrl === '') {
-        throw new FailedToCreateNewScanner();
-      }
-
-      const queryResp = await axios.get<HBaseBookDto>(scannerUrl, {
-        headers: { Accept: 'application/json' },
-      });
-
-      await axios.delete(scannerUrl);
-
-      if (!queryResp.data) return null;
-
-      return queryResp.data;
-    } catch (err) {
-      console.error(err);
-      throw new FailedToCreateNewScanner();
-    }
-  }
-
-  private parseBasic(hbaseDto: HBaseRow): SearchBookDto {
-    const result = hbaseDto.Cell[0];
-    const rawCombinedInfos = this.decodeBase64(result.$);
-    const [isbn, bookName, publishedYearInString, coverUrl] = rawCombinedInfos.split(
-      HBaseDB.DELIMITER
-    );
-
-    return {
-      isbn: isbn,
-      name: bookName,
-      publishedYear: parseInt(publishedYearInString),
-      coverUrl: coverUrl,
-    };
-  }
-
-  private decodeBase64(value: string): string {
-    return Buffer.from(value, 'base64').toString();
-  }
-
-  private encodeBase64(value: string): string {
-    return Buffer.from(value).toString('base64');
-  }
-
-  /**
-   * throws IsbnNotExist
-   */
-  async getKeyOfIsbn(isbn: string): Promise<string> {
-    // Shell script: scan 'book', {FILTER => "( PrefixFilter('1234567890') )"}
-    const encodedIsbn = this.encodeBase64(isbn);
-
-    const prefixFilterScannerString = `
-    <Scanner batch="1" maxVersions="1">
-      <column>aW5mbw==</column>
-      <filter>
-        {
-          "type":"PrefixFilter",
-          "value":"${encodedIsbn}"
-        }
-      </filter>
-    </Scanner>`;
-
-    const result = await this.performScanRequest(prefixFilterScannerString);
-
-    if (result === null || result['Row'].length !== 1) throw new IsbnNotExist(isbn);
-
-    const key = this.decodeBase64(result['Row'][0].key);
-    return key;
   }
 }
